@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Users</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="dashboard-page">
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">PG</div>
+        <div><strong>PhishGuard</strong><small>Admin Console</small></div>
+    </div>
+    <nav>
+        <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+        <a href="/admin/campaigns" class="nav-item">Campaigns</a>
+        <a href="/admin/templates" class="nav-item">Templates</a>
+        <a href="/admin/users" class="nav-item active">Users</a>
+        <a href="/admin/groups" class="nav-item">Groups</a>
+        <a href="/admin/departments" class="nav-item">Departments</a>
+        <a href="/admin/reports" class="nav-item">Reports</a>
+    </nav>
+    <button id="logoutButton" class="logout-button" type="button">Logout</button>
+</div>
+
+<main class="main-content">
+    <header class="topbar">
+        <div>
+            <h1>Users</h1>
+            <p>Manage employees used in phishing simulations.</p>
+        </div>
+        <button id="newUserButton" class="primary-action-button" type="button">+ New User</button>
+    </header>
+
+    <section class="dashboard-panel campaigns-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Employee Directory</h2>
+                <p>Users available for campaign targeting.</p>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th>Risk Score</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="userTable">
+                <tr><td colspan="7">Loading users...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div
+    id="userModal"
+    class="modal-overlay hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="userModalTitle"
+>
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="userModalTitle">Add User</h2>
+                <p>Add an employee to the awareness platform.</p>
+            </div>
+            <button id="closeUserModal" class="modal-close" type="button" aria-label="Close user dialog">
+                &times;
+            </button>
+        </div>
+
+        <form id="userForm">
+            <input id="userId" type="hidden">
+
+            <div class="form-group">
+                <label for="userName">Name</label>
+                <input id="userName" type="text" required>
+            </div>
+            <div class="form-group">
+                <label for="userEmail">Email</label>
+                <input id="userEmail" type="email" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="userRole">Role</label>
+                    <input id="userRole" type="text" placeholder="Employee" required>
+                </div>
+                <div class="form-group">
+                    <label for="userStatus">Status</label>
+                    <select id="userStatus" required>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="userDepartment">Department</label>
+                <select id="userDepartment">
+                    <option value="">No department</option>
+                </select>
+            </div>
+
+            <div id="userError" class="error-message" role="alert" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button id="cancelUserButton" type="button" class="secondary-button">Cancel</button>
+                <button id="saveUserButton" type="submit" class="primary-action-button">Save User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/admin_api.js"></script>
+<script src="/static/js/users.js"></script>
+</body>
+</html>

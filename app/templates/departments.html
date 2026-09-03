@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Departments</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="dashboard-page">
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">PG</div>
+        <div><strong>PhishGuard</strong><small>Admin Console</small></div>
+    </div>
+    <nav>
+        <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+        <a href="/admin/campaigns" class="nav-item">Campaigns</a>
+        <a href="/admin/templates" class="nav-item">Templates</a>
+        <a href="/admin/users" class="nav-item">Users</a>
+        <a href="/admin/groups" class="nav-item">Groups</a>
+        <a href="/admin/departments" class="nav-item active">Departments</a>
+        <a href="/admin/reports" class="nav-item">Reports</a>
+    </nav>
+    <button id="logoutButton" class="logout-button" type="button">Logout</button>
+</div>
+
+<main class="main-content">
+    <header class="topbar">
+        <div>
+            <h1>Departments</h1>
+            <p>Organize employees by business unit.</p>
+        </div>
+        <button id="newDepartmentButton" class="primary-action-button" type="button">
+            + New Department
+        </button>
+    </header>
+
+    <section class="dashboard-panel campaigns-panel">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr><th>Name</th><th>Code</th><th>Head</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="departmentTable">
+                <tr><td colspan="4">Loading departments...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div
+    id="departmentModal"
+    class="modal-overlay hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="departmentModalTitle"
+>
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="departmentModalTitle">Create Department</h2>
+                <p>Add an organisational department.</p>
+            </div>
+            <button
+                id="closeDepartmentModal"
+                class="modal-close"
+                type="button"
+                aria-label="Close department dialog"
+            >&times;</button>
+        </div>
+
+        <form id="departmentForm">
+            <div class="form-group">
+                <label for="departmentName">Department Name</label>
+                <input id="departmentName" type="text" required>
+            </div>
+            <div class="form-group">
+                <label for="departmentCode">Code</label>
+                <input id="departmentCode" type="text" placeholder="IT" required>
+            </div>
+            <div class="form-group">
+                <label for="departmentHead">Department Head</label>
+                <input id="departmentHead" type="text">
+            </div>
+
+            <div id="departmentError" class="error-message" role="alert" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button id="cancelDepartmentButton" type="button" class="secondary-button">Cancel</button>
+                <button id="saveDepartmentButton" type="submit" class="primary-action-button">
+                    Create Department
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/admin_api.js"></script>
+<script src="/static/js/departments.js"></script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Reports</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="dashboard-page">
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">PG</div>
+        <div><strong>PhishGuard</strong><small>Admin Console</small></div>
+    </div>
+    <nav>
+        <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+        <a href="/admin/campaigns" class="nav-item">Campaigns</a>
+        <a href="/admin/templates" class="nav-item">Templates</a>
+        <a href="/admin/users" class="nav-item">Users</a>
+        <a href="/admin/groups" class="nav-item">Groups</a>
+        <a href="/admin/departments" class="nav-item">Departments</a>
+        <a href="/admin/reports" class="nav-item active">Reports</a>
+    </nav>
+    <button id="logoutButton" class="logout-button" type="button">Logout</button>
+</div>
+
+<main class="main-content">
+    <header class="topbar">
+        <div>
+            <h1>Security Awareness Reports</h1>
+            <p>Review campaign performance and employee awareness risk.</p>
+        </div>
+        <button id="exportCsvButton" class="primary-action-button" type="button" disabled>
+            Export CSV
+        </button>
+    </header>
+
+    <section class="metrics-grid">
+        <div class="metric-card"><span>Total Targets</span><strong id="reportTargets">0</strong></div>
+        <div class="metric-card"><span>Open Rate</span><strong id="reportOpenRate">0%</strong></div>
+        <div class="metric-card"><span>Click Rate</span><strong id="reportClickRate">0%</strong></div>
+        <div class="metric-card"><span>Report Rate</span><strong id="reportReportRate">0%</strong></div>
+        <div class="metric-card">
+            <span>Form Submission Rate</span><strong id="reportSubmissionRate">0%</strong>
+        </div>
+    </section>
+
+    <section class="dashboard-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Campaign Performance</h2>
+                <p>Comparison of phishing simulation campaigns.</p>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Campaign</th><th>Status</th><th>Targets</th><th>Open Rate</th>
+                    <th>Click Rate</th><th>Report Rate</th><th>Submission Rate</th>
+                </tr>
+                </thead>
+                <tbody id="campaignReportTable">
+                <tr><td colspan="7">Loading campaign performance...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dashboard-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>User Risk Assessment</h2>
+                <p>Risk based only on simulation activity.</p>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>User</th><th>Email</th><th>Department</th><th>Clicks</th>
+                    <th>Reports</th><th>Submissions</th><th>Risk Score</th><th>Risk Level</th>
+                </tr>
+                </thead>
+                <tbody id="userRiskTable">
+                <tr><td colspan="8">Loading risk data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dashboard-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Department Performance</h2>
+                <p>Aggregated awareness statistics by department.</p>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Department</th><th>Users</th><th>Clicks</th><th>Reports</th>
+                    <th>Submissions</th><th>Average Risk</th>
+                </tr>
+                </thead>
+                <tbody id="departmentReportTable">
+                <tr><td colspan="6">Loading department performance...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script src="/static/js/admin_api.js"></script>
+<script src="/static/js/reports.js"></script>
+</body>
+</html>

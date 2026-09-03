@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Campaigns</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="dashboard-page">
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">PG</div>
+        <div>
+            <strong>PhishGuard</strong>
+            <small>Admin Console</small>
+        </div>
+    </div>
+
+    <nav>
+        <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+        <a href="/admin/campaigns" class="nav-item active">Campaigns</a>
+        <a href="/admin/templates" class="nav-item">Templates</a>
+        <a href="/admin/users" class="nav-item">Users</a>
+        <a href="/admin/groups" class="nav-item">Groups</a>
+        <a href="/admin/departments" class="nav-item">Departments</a>
+        <a href="/admin/reports" class="nav-item">Reports</a>
+    </nav>
+
+    <button id="logoutButton" class="logout-button" type="button">Logout</button>
+</div>
+
+<main class="main-content">
+    <header class="topbar">
+        <div>
+            <h1>Campaign Management</h1>
+            <p>Create and manage phishing simulations.</p>
+        </div>
+        <button id="openCreateCampaign" class="primary-action-button" type="button">
+            + New Campaign
+        </button>
+    </header>
+
+    <section class="dashboard-panel campaigns-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Campaigns</h2>
+                <p>All phishing simulation campaigns.</p>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Campaign</th>
+                    <th>Status</th>
+                    <th>Scheduled</th>
+                    <th>Targets</th>
+                    <th>Opens</th>
+                    <th>Clicks</th>
+                    <th>Reports</th>
+                    <th>Submissions</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody id="campaignTable">
+                <tr><td colspan="9">Loading campaigns...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div
+    id="campaignModal"
+    class="modal-overlay hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="campaignModalTitle"
+>
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="campaignModalTitle">Create Campaign</h2>
+                <p>Configure a phishing awareness simulation.</p>
+            </div>
+            <button
+                id="closeCampaignModal"
+                class="modal-close"
+                type="button"
+                aria-label="Close campaign dialog"
+            >&times;</button>
+        </div>
+
+        <form id="campaignForm">
+            <div class="form-group">
+                <label for="campaignName">Campaign Name</label>
+                <input id="campaignName" type="text" required>
+            </div>
+
+            <div class="form-group">
+                <label for="templateSelect">Template</label>
+                <select id="templateSelect" required>
+                    <option value="">Select template</option>
+                </select>
+            </div>
+
+            <fieldset class="selection-group">
+                <legend>Target Groups</legend>
+                <div id="groupList" class="selection-box">Loading groups...</div>
+            </fieldset>
+
+            <fieldset class="selection-group">
+                <legend>Individual Users</legend>
+                <div id="userList" class="selection-box">Loading users...</div>
+            </fieldset>
+
+            <fieldset class="selection-group">
+                <legend>Delivery</legend>
+                <div class="delivery-options">
+                    <label class="radio-item">
+                        <input type="radio" name="deliveryMode" value="draft" checked>
+                        <span>
+                            <strong>Save as Draft</strong>
+                            <small>Create the campaign without sending it.</small>
+                        </span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="deliveryMode" value="now">
+                        <span>
+                            <strong>Send Immediately</strong>
+                            <small>Start delivery after the campaign is created.</small>
+                        </span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="deliveryMode" value="scheduled">
+                        <span>
+                            <strong>Schedule</strong>
+                            <small>Send automatically at a future date and time.</small>
+                        </span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <div id="scheduleContainer" class="form-group hidden">
+                <label for="scheduledAt">Schedule Date &amp; Time</label>
+                <input id="scheduledAt" type="datetime-local">
+                <small class="field-help">Uses the administrator's local browser time.</small>
+            </div>
+
+            <div id="campaignError" class="error-message" role="alert" aria-live="polite"></div>
+
+            <div class="modal-actions">
+                <button type="button" id="cancelCampaign" class="secondary-button">Cancel</button>
+                <button id="createCampaignButton" type="submit" class="primary-action-button">
+                    Create Campaign
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/admin_api.js"></script>
+<script src="/static/js/campaigns.js"></script>
+</body>
+</html>

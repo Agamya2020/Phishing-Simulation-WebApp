@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Dashboard</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="dashboard-page">
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">PG</div>
+        <div>
+            <strong>PhishGuard</strong>
+            <small>Admin Console</small>
+        </div>
+    </div>
+
+    <nav>
+        <a href="/admin/dashboard" class="nav-item active">Dashboard</a>
+        <a href="/admin/campaigns" class="nav-item">Campaigns</a>
+        <a href="/admin/templates" class="nav-item">Templates</a>
+        <a href="/admin/users" class="nav-item">Users</a>
+        <a href="/admin/groups" class="nav-item">Groups</a>
+        <a href="/admin/departments" class="nav-item">Departments</a>
+        <a href="/admin/reports" class="nav-item">Reports</a>
+    </nav>
+
+    <button id="logoutButton" class="logout-button" type="button">Logout</button>
+</div>
+
+<main class="main-content">
+    <header class="topbar">
+        <div>
+            <h1>Security Awareness Dashboard</h1>
+            <p>Monitor phishing simulation performance.</p>
+        </div>
+        <div class="admin-badge">Administrator</div>
+    </header>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <span>Employees</span>
+            <strong id="totalUsers">-</strong>
+            <small>Active simulation users</small>
+        </div>
+        <div class="stat-card">
+            <span>Groups</span>
+            <strong id="totalGroups">-</strong>
+            <small>Target groups</small>
+        </div>
+        <div class="stat-card">
+            <span>Templates</span>
+            <strong id="totalTemplates">-</strong>
+            <small>Phishing scenarios</small>
+        </div>
+        <div class="stat-card">
+            <span>Campaigns</span>
+            <strong id="totalCampaigns">-</strong>
+            <small>Total simulations</small>
+        </div>
+    </section>
+
+    <section class="section-title">
+        <div>
+            <h2>Campaign Performance</h2>
+            <p>Aggregated security awareness results.</p>
+        </div>
+    </section>
+
+    <section class="metrics-grid">
+        <div class="metric-card"><span>Targeted</span><strong id="targetCount">0</strong></div>
+        <div class="metric-card"><span>Opened</span><strong id="openCount">0</strong></div>
+        <div class="metric-card"><span>Clicked</span><strong id="clickCount">0</strong></div>
+        <div class="metric-card"><span>Reported</span><strong id="reportCount">0</strong></div>
+        <div class="metric-card"><span>Form Submitted</span><strong id="credsCount">0</strong></div>
+    </section>
+
+    <section class="dashboard-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Recent Campaigns</h2>
+                <p>Latest phishing simulations.</p>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Campaign</th>
+                    <th>Status</th>
+                    <th>Targets</th>
+                    <th>Opens</th>
+                    <th>Clicks</th>
+                    <th>Reports</th>
+                    <th>Submissions</th>
+                </tr>
+                </thead>
+                <tbody id="campaignTable">
+                <tr><td colspan="7">Loading campaigns...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script src="/static/js/admin_api.js"></script>
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

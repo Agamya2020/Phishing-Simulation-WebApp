@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Templates</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="dashboard-page">
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">PG</div>
+        <div>
+            <strong>PhishGuard</strong>
+            <small>Admin Console</small>
+        </div>
+    </div>
+
+    <nav>
+        <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+        <a href="/admin/campaigns" class="nav-item">Campaigns</a>
+        <a href="/admin/templates" class="nav-item active">Templates</a>
+        <a href="/admin/users" class="nav-item">Users</a>
+        <a href="/admin/groups" class="nav-item">Groups</a>
+        <a href="/admin/departments" class="nav-item">Departments</a>
+        <a href="/admin/reports" class="nav-item">Reports</a>
+    </nav>
+
+    <button id="logoutButton" class="logout-button" type="button">Logout</button>
+</div>
+
+<main class="main-content">
+    <header class="topbar">
+        <div>
+            <h1>Email Templates</h1>
+            <p>Manage security awareness simulation templates.</p>
+        </div>
+        <button id="newTemplateButton" class="primary-action-button" type="button">
+            + New Template
+        </button>
+    </header>
+
+    <section class="dashboard-panel campaigns-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Simulation Templates</h2>
+                <p>Templates available for phishing campaigns.</p>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Template</th>
+                    <th>Category</th>
+                    <th>Vector</th>
+                    <th>Subject</th>
+                    <th>Sender</th>
+                    <th>Uses</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="templateTable">
+                <tr><td colspan="7">Loading templates...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div
+    id="templateModal"
+    class="modal-overlay hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="templateModalTitle"
+>
+    <div class="modal-card template-modal">
+        <div class="modal-header">
+            <div>
+                <h2 id="templateModalTitle">Create Template</h2>
+                <p>Configure the simulated phishing message.</p>
+            </div>
+            <button
+                id="closeTemplateModal"
+                class="modal-close"
+                type="button"
+                aria-label="Close template dialog"
+            >&times;</button>
+        </div>
+
+        <form id="templateForm">
+            <input id="templateId" type="hidden">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="templateName">Template Name</label>
+                    <input id="templateName" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label for="templateCategory">Category</label>
+                    <select id="templateCategory" required>
+                        <option value="">Select category</option>
+                        <option value="credentials">Credentials</option>
+                        <option value="delivery">Delivery</option>
+                        <option value="finance">Finance</option>
+                        <option value="hr">HR</option>
+                        <option value="account">Account Security</option>
+                        <option value="social">Social Engineering</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="templateVector">Attack Vector</label>
+                    <select id="templateVector" required>
+                        <option value="">Select vector</option>
+                        <option value="email">Email</option>
+                        <option value="sms">SMS</option>
+                        <option value="social">Social / Messaging</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="templateSender">Sender</label>
+                    <input
+                        id="templateSender"
+                        type="text"
+                        placeholder="IT Support &lt;it@example.com&gt;"
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="templateSubject">Email Subject</label>
+                <input id="templateSubject" type="text" required>
+            </div>
+
+            <div class="form-group">
+                <label for="templateBody">Email Body</label>
+                <textarea
+                    id="templateBody"
+                    class="template-body-editor"
+                    rows="12"
+                    required
+                ></textarea>
+                <small class="field-help">
+                    Supported placeholders: [Employee Name], [Name], [name]<br>
+                    Begin a line with &rarr; to create the tracked campaign button.
+                </small>
+            </div>
+
+            <div class="template-preview-section">
+                <div class="preview-heading">Email Preview</div>
+                <div class="email-preview">
+                    <div class="preview-field">
+                        <strong>From:</strong> <span id="previewSender">-</span>
+                    </div>
+                    <div class="preview-field">
+                        <strong>Subject:</strong> <span id="previewSubject">-</span>
+                    </div>
+                    <div id="previewBody" class="preview-body">
+                        Email preview will appear here.
+                    </div>
+                </div>
+            </div>
+
+            <div id="templateError" class="error-message" role="alert" aria-live="polite"></div>
+
+            <div class="modal-actions">
+                <button id="cancelTemplateButton" type="button" class="secondary-button">Cancel</button>
+                <button id="saveTemplateButton" type="submit" class="primary-action-button">
+                    Save Template
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/admin_api.js"></script>
+<script src="/static/js/templates.js"></script>
+</body>
+</html>

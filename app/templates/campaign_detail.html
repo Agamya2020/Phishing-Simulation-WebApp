@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Campaign Analytics</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body
+    class="dashboard-page"
+    data-campaign-id="{{ campaign_id }}"
+>
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">PG</div>
+        <div><strong>PhishGuard</strong><small>Admin Console</small></div>
+    </div>
+    <nav>
+        <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+        <a href="/admin/campaigns" class="nav-item active">Campaigns</a>
+        <a href="/admin/templates" class="nav-item">Templates</a>
+        <a href="/admin/users" class="nav-item">Users</a>
+        <a href="/admin/groups" class="nav-item">Groups</a>
+        <a href="/admin/departments" class="nav-item">Departments</a>
+        <a href="/admin/reports" class="nav-item">Reports</a>
+    </nav>
+    <button id="logoutButton" class="logout-button" type="button">Logout</button>
+</div>
+
+<main class="main-content">
+    <header class="topbar">
+        <div>
+            <a href="/admin/campaigns" class="back-link">&larr; Back to Campaigns</a>
+            <h1 id="campaignName">Loading campaign...</h1>
+            <p id="campaignDescription">Campaign analytics</p>
+        </div>
+        <span id="campaignStatus" class="status-badge">-</span>
+    </header>
+
+    <section class="metrics-grid">
+        <div class="metric-card"><span>Targets</span><strong id="targetCount">0</strong></div>
+        <div class="metric-card"><span>Opened</span><strong id="openCount">0</strong><small id="openRate">0%</small></div>
+        <div class="metric-card"><span>Clicked</span><strong id="clickCount">0</strong><small id="clickRate">0%</small></div>
+        <div class="metric-card"><span>Reported</span><strong id="reportCount">0</strong><small id="reportRate">0%</small></div>
+        <div class="metric-card">
+            <span>Form Submitted</span><strong id="credsCount">0</strong><small id="submissionRate">0%</small>
+        </div>
+    </section>
+
+    <section class="dashboard-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Recipient Activity</h2>
+                <p>Awareness activity per targeted user.</p>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>User</th><th>Email</th><th>Sent</th><th>Opened</th>
+                    <th>Clicked</th><th>Reported</th><th>Submitted</th>
+                </tr>
+                </thead>
+                <tbody id="recipientTable">
+                <tr><td colspan="7">Loading recipient activity...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dashboard-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Event Timeline</h2>
+                <p>Recorded events for this simulation.</p>
+            </div>
+        </div>
+        <div id="eventTimeline">
+            <div class="timeline-empty">Loading events...</div>
+        </div>
+    </section>
+</main>
+
+<script src="/static/js/admin_api.js"></script>
+<script src="/static/js/campaign_detail.js"></script>
+</body>
+</html>
