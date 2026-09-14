@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Float, Boolean, DateTime, ForeignKey, Text, Enum as SaEnum
+from sqlalchemy import String, Integer, Float, Boolean, DateTime, ForeignKey, Text, Enum as SaEnum, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import ARRAY
 from app.core.db import Base
@@ -66,6 +66,24 @@ class Template(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
+class SenderIdentity(Base):
+    __tablename__ = "sender_identities"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    domain: Mapped[str] = mapped_column(String, nullable=False)
+
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
 class Campaign(Base):
     __tablename__ = "campaigns"
 
@@ -75,6 +93,11 @@ class Campaign(Base):
     status: Mapped[str] = mapped_column(String(30), default="draft")
     vector: Mapped[str] = mapped_column(String(30), default="Email")
     template_id: Mapped[str] = mapped_column(String, ForeignKey("templates.id"), nullable=True)
+    sender_identity_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("sender_identities.id"),
+        nullable=True,
+    )
     group_ids: Mapped[list] = mapped_column(ARRAY(String), default=list)
     target_user_ids: Mapped[list] = mapped_column(ARRAY(String), default=list)
     target_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -92,6 +115,7 @@ class Campaign(Base):
     )
 
     template: Mapped["Template"] = relationship("Template", lazy="select")
+    sender_identity: Mapped["SenderIdentity"] = relationship("SenderIdentity")
     events: Mapped[list["CampaignEvent"]] = relationship("CampaignEvent", back_populates="campaign", lazy="select")
 
 
