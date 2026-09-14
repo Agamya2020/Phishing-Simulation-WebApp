@@ -127,6 +127,22 @@ async def admin_departments(
 
 
 @router.get(
+    "/admin/senders",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def admin_senders(
+    request: Request,
+    admin: str = Depends(require_admin_page),
+):
+    return templates.TemplateResponse(
+        request=request,
+        name="senders.html",
+        context={"admin_username": admin},
+    )
+
+
+@router.get(
     "/admin/campaigns/{campaign_id}",
     response_class=HTMLResponse,
     include_in_schema=False,
