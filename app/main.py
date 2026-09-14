@@ -11,6 +11,7 @@ from app.core.security import require_admin, require_csrf
 from app.core.startup import log_environment, verify_database
 from app.api.auth import router as auth_router
 from app.api.campaigns import router as campaigns_router
+from app.api.senders import router as senders_router
 from app.api.tracking import router as tracking_router
 from app.api.data import users_router, groups_router, templates_router, departments_router
 from app.web.routes import router as web_router
@@ -103,6 +104,7 @@ app.include_router(users_router, prefix="/api")
 app.include_router(groups_router, prefix="/api")
 app.include_router(templates_router, prefix="/api")
 app.include_router(departments_router, prefix="/api")
+app.include_router(senders_router, prefix="/api")
 app.include_router(web_router)
 
 

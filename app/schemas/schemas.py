@@ -109,6 +109,31 @@ class TemplateUpdate(BaseModel):
     body: str | None = None
 
 
+# ─── Sender Identity ──────────────────────────────────────────────────────────
+
+class SenderIdentityOut(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    domain: str
+    is_verified: bool
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SenderIdentityCreate(BaseModel):
+    name: str
+    email: EmailStr
+
+
+class SenderIdentityUpdate(BaseModel):
+    name: str | None = None
+    is_verified: bool | None = None
+    is_active: bool | None = None
+
+
 # ─── Campaign ──────────────────────────────────────────────────────────────────
 
 class CampaignOut(BaseModel):
