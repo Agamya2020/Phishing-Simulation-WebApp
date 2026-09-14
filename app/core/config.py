@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str | None = None
     SMTP_PASSWORD: str | None = None
     SMTP_USE_TLS: bool = False
+    SMTP_FROM_EMAIL: str = "simulator@localhost"
+    SMTP_FROM_NAME: str = "PhishGuard Simulator"
 
     # Tracking
     TRACKING_BASE_URL: str = "http://localhost:8000"

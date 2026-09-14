@@ -14,7 +14,7 @@ async def send_email(
     """Send an email via SMTP (routes to Mailpit in development)."""
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = sender or "PhishGuard Simulator <simulator@phishguard.io>"
+    msg["From"] = sender or f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
     msg["To"] = f"{to_name} <{to_email}>"
 
     part = MIMEText(html_body, "html")

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.db import engine
@@ -36,6 +36,11 @@ app = FastAPI(
     redirect_slashes=False,
     debug=settings.DEBUG,
 )
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/admin/login", status_code=302)
 
 
 @app.middleware("http")
