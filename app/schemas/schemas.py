@@ -111,6 +111,21 @@ class TemplateUpdate(BaseModel):
 
 # ─── Sender Identity ──────────────────────────────────────────────────────────
 
+class SenderDomainCreate(BaseModel):
+    domain: str
+
+
+class SenderDomainOut(BaseModel):
+    id: int
+    domain: str
+    resend_domain_id: str | None = None
+    status: str
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class SenderIdentityOut(BaseModel):
     id: int
     name: str
