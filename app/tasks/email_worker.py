@@ -12,6 +12,7 @@ from app.models.models import (
     Template,
     CampaignEvent,
     SenderIdentity,
+    SenderDomain,
 )
 from app.core.mailer import send_email
 from app.core.config import settings
@@ -235,26 +236,35 @@ async def dispatch_campaign_emails(campaign_id: str):
             if campaign.sender_identity_id is not None:
 
                 result = await db.execute(
-                    select(SenderIdentity)
+                    select(SenderIdentity, SenderDomain)
+                    .join(
+                        SenderDomain,
+                        SenderIdentity.domain_id == SenderDomain.id,
+                    )
                     .where(
                         SenderIdentity.id == campaign.sender_identity_id,
                         SenderIdentity.is_verified.is_(True),
                         SenderIdentity.is_active.is_(True),
+                        SenderDomain.status == "verified",
+                        SenderDomain.is_active.is_(True),
                     )
                 )
 
-                sender_identity = result.scalar_one_or_none()
+                sender_row = result.first()
 
-                if not sender_identity:
+                if not sender_row:
                     logger.error(
-                        "Sender identity %s for campaign %s is not verified or active",
-                        campaign.sender_identity_id,
+                        "Sender or domain for campaign %s is not verified or active",
                         campaign.id,
                     )
 
                     campaign.status = "failed"
+
                     await db.commit()
+
                     return
+
+                sender_identity, sender_domain = sender_row
 
                 sender_value = (
                     f"{sender_identity.name} "
@@ -262,9 +272,10 @@ async def dispatch_campaign_emails(campaign_id: str):
                 )
 
                 logger.info(
-                    "Campaign %s using sender %s",
+                    "Campaign %s using sender %s via verified domain %s",
                     campaign.id,
                     sender_identity.email,
+                    sender_domain.domain,
                 )
 
             # --------------------------------------------------

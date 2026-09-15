@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     # Redis (reserved for future queues, caching, or rate limiting)
     REDIS_URL: str = "redis://localhost:6379"
 
+    # Resend
+    RESEND_API_KEY: str | None = None
+
     # SMTP
     SMTP_HOST: str = "localhost"
     SMTP_PORT: int = 1025

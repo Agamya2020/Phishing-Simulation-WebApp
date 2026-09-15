@@ -9,6 +9,7 @@ from app.models.models import (
     Group,
     User,
     SenderIdentity,
+    SenderDomain,
 )
 from app.schemas.schemas import CampaignCreate, CampaignOut, CampaignUpdate
 from app.tasks.email_worker import dispatch_campaign_emails
@@ -92,19 +93,29 @@ async def create_campaign(
     # Validate selected sender identity.
     if payload.sender_identity_id is not None:
         result = await db.execute(
-            select(SenderIdentity).where(
+            select(SenderIdentity, SenderDomain)
+            .join(
+                SenderDomain,
+                SenderIdentity.domain_id == SenderDomain.id,
+            )
+            .where(
                 SenderIdentity.id == payload.sender_identity_id,
                 SenderIdentity.is_verified.is_(True),
                 SenderIdentity.is_active.is_(True),
+                SenderDomain.status == "verified",
+                SenderDomain.is_active.is_(True),
             )
         )
 
-        sender_identity = result.scalar_one_or_none()
+        sender_row = result.first()
 
-        if not sender_identity:
+        if not sender_row:
             raise HTTPException(
                 status_code=400,
-                detail="Selected sender is not verified or active.",
+                detail=(
+                    "Selected sender or its domain is not verified "
+                    "or active."
+                ),
             )
 
     campaign = Campaign(

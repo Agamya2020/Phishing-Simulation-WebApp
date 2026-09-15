@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>PhishGuard | Sender Domains</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/admin.css"
+    >
+</head>
+
+
+<body class="dashboard-page">
+
+
+<div class="sidebar">
+
+    <div class="sidebar-brand">
+
+        <div class="brand-icon">
+            PG
+        </div>
+
+        <div>
+            <strong>PhishGuard</strong>
+            <small>Admin Console</small>
+        </div>
+
+    </div>
+
+
+    <nav>
+
+        <a
+            href="/admin/dashboard"
+            class="nav-item"
+        >
+            Dashboard
+        </a>
+
+        <a
+            href="/admin/campaigns"
+            class="nav-item"
+        >
+            Campaigns
+        </a>
+
+        <a
+            href="/admin/templates"
+            class="nav-item"
+        >
+            Templates
+        </a>
+
+        <a
+            href="/admin/users"
+            class="nav-item"
+        >
+            Users
+        </a>
+
+        <a
+            href="/admin/groups"
+            class="nav-item"
+        >
+            Groups
+        </a>
+
+        <a
+            href="/admin/departments"
+            class="nav-item"
+        >
+            Departments
+        </a>
+
+        <a
+            href="/admin/domains"
+            class="nav-item active"
+        >
+            Domains
+        </a>
+
+        <a
+            href="/admin/senders"
+            class="nav-item"
+        >
+            Senders
+        </a>
+
+        <a
+            href="/admin/reports"
+            class="nav-item"
+        >
+            Reports
+        </a>
+
+    </nav>
+
+
+    <button
+        id="logoutButton"
+        class="logout-button"
+        type="button"
+    >
+        Logout
+    </button>
+
+</div>
+
+
+
+<main class="main-content">
+
+
+<header class="topbar">
+
+    <div>
+
+        <h1>Sender Domains</h1>
+
+        <p>
+            Manage domains authorized for campaign sender identities.
+        </p>
+
+    </div>
+
+
+    <div class="action-buttons">
+
+        <button
+            id="importDomainButton"
+            type="button"
+            class="secondary-button"
+        >
+            Import Existing
+        </button>
+
+        <button
+            id="addDomainButton"
+            type="button"
+            class="primary-action-button"
+        >
+            + Add Domain
+        </button>
+
+    </div>
+
+</header>
+
+
+
+<section class="dashboard-panel">
+
+    <div class="panel-heading">
+
+        <div>
+
+            <h2>Authorized Domains</h2>
+
+            <p>
+                Sender addresses may only use verified domains.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+            <tr>
+                <th>Domain</th>
+                <th>Status</th>
+                <th>Resend ID</th>
+                <th>Actions</th>
+            </tr>
+
+            </thead>
+
+
+            <tbody id="domainTable">
+
+            <tr>
+                <td colspan="4">
+                    Loading domains...
+                </td>
+            </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+
+<section
+    id="dnsPanel"
+    class="dashboard-panel hidden"
+>
+
+    <div class="panel-heading">
+
+        <div>
+            <h2>DNS Records</h2>
+
+            <p id="dnsDomainName"></p>
+        </div>
+
+    </div>
+
+
+    <div
+        id="dnsRecords"
+        class="table-wrapper"
+    ></div>
+
+</section>
+
+
+</main>
+
+
+
+<div
+    id="domainModal"
+    class="modal-overlay hidden"
+>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2 id="domainModalTitle">
+                    Add Domain
+                </h2>
+
+                <p id="domainModalDescription">
+                    Add a new sending domain to Resend.
+                </p>
+
+            </div>
+
+
+            <button
+                id="closeDomainModal"
+                type="button"
+                class="modal-close"
+            >
+                &times;
+            </button>
+
+        </div>
+
+
+        <form id="domainForm">
+
+            <div class="form-group">
+
+                <label for="domainName">
+                    Domain
+                </label>
+
+                <input
+                    id="domainName"
+                    type="text"
+                    placeholder="example.com"
+                    required
+                >
+
+                <small class="field-help">
+                    Enter only the domain name,
+                    without https://
+                </small>
+
+            </div>
+
+
+            <div
+                id="domainError"
+                class="error-message"
+            ></div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    id="cancelDomainButton"
+                    type="button"
+                    class="secondary-button"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    id="saveDomainButton"
+                    type="submit"
+                    class="primary-action-button"
+                >
+                    Add Domain
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<script src="/static/js/admin_api.js"></script>
+<script src="/static/js/domains.js"></script>
+
+</body>
+
+</html>

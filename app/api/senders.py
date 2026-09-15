@@ -4,7 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.security import require_admin
-from app.models.models import SenderIdentity
+from app.models.models import (
+    SenderIdentity,
+    SenderDomain,
+)
 from app.schemas.schemas import (
     SenderIdentityCreate,
     SenderIdentityOut,
@@ -35,7 +38,9 @@ async def create_sender(
     domain = email.split("@", 1)[1]
 
     existing = await db.execute(
-        select(SenderIdentity).where(SenderIdentity.email == email)
+        select(SenderIdentity).where(
+            SenderIdentity.email == email
+        )
     )
 
     if existing.scalar_one_or_none():
@@ -44,12 +49,31 @@ async def create_sender(
             detail="Sender email already exists",
         )
 
+    domain_result = await db.execute(
+        select(SenderDomain).where(
+            SenderDomain.domain == domain,
+            SenderDomain.status == "verified",
+            SenderDomain.is_active.is_(True),
+        )
+    )
+
+    verified_domain = domain_result.scalar_one_or_none()
+
+    if not verified_domain:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "The sender domain is not verified. "
+                "Add and verify the domain first."
+            ),
+        )
+
     sender = SenderIdentity(
         name=payload.name.strip(),
         email=email,
         domain=domain,
-        # New senders are not automatically trusted.
-        is_verified=False,
+        domain_id=verified_domain.id,
+        is_verified=True,
         is_active=True,
     )
 

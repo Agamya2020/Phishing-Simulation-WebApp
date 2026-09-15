@@ -106,29 +106,6 @@ function renderSenders() {
 
                     <div class="action-buttons">
 
-                        ${
-                            sender.is_verified
-                                ? `
-                                <button
-                                    class="table-action-button unverify-sender-button"
-                                    data-sender-id="${sender.id}"
-                                    type="button"
-                                >
-                                    Unverify
-                                </button>
-                                `
-                                : `
-                                <button
-                                    class="table-action-button verify-sender-button"
-                                    data-sender-id="${sender.id}"
-                                    type="button"
-                                >
-                                    Mark Verified
-                                </button>
-                                `
-                        }
-
-
                         <button
                             class="table-action-button toggle-sender-button"
                             data-sender-id="${sender.id}"
@@ -324,55 +301,6 @@ async function deleteSender(senderId) {
 senderTable.addEventListener(
     "click",
     async event => {
-
-        const verifyButton =
-            event.target.closest(
-                ".verify-sender-button"
-            );
-
-
-        if (verifyButton) {
-
-            const confirmed =
-                window.confirm(
-                    "Only mark this sender as verified after confirming that its domain is authorized and verified with your email provider. Continue?"
-                );
-
-
-            if (!confirmed) {
-                return;
-            }
-
-
-            await updateSender(
-                verifyButton.dataset.senderId,
-                {
-                    is_verified: true
-                }
-            );
-
-            return;
-        }
-
-
-        const unverifyButton =
-            event.target.closest(
-                ".unverify-sender-button"
-            );
-
-
-        if (unverifyButton) {
-
-            await updateSender(
-                unverifyButton.dataset.senderId,
-                {
-                    is_verified: false
-                }
-            );
-
-            return;
-        }
-
 
         const toggleButton =
             event.target.closest(

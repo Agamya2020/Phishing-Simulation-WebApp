@@ -131,6 +131,7 @@ class SenderIdentityOut(BaseModel):
     name: str
     email: EmailStr
     domain: str
+    domain_id: int | None = None
     is_verified: bool
     is_active: bool
     created_at: datetime
@@ -145,7 +146,6 @@ class SenderIdentityCreate(BaseModel):
 
 class SenderIdentityUpdate(BaseModel):
     name: str | None = None
-    is_verified: bool | None = None
     is_active: bool | None = None
 
 
