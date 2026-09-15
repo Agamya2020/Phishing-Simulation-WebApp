@@ -6,7 +6,13 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 
-from app.models.models import Campaign, User, Template, CampaignEvent
+from app.models.models import (
+    Campaign,
+    User,
+    Template,
+    CampaignEvent,
+    SenderIdentity,
+)
 from app.core.mailer import send_email
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal
@@ -221,6 +227,47 @@ async def dispatch_campaign_emails(campaign_id: str):
                 return
 
             # --------------------------------------------------
+            # Load campaign sender identity
+            # --------------------------------------------------
+
+            sender_value = None
+
+            if campaign.sender_identity_id is not None:
+
+                result = await db.execute(
+                    select(SenderIdentity)
+                    .where(
+                        SenderIdentity.id == campaign.sender_identity_id,
+                        SenderIdentity.is_verified.is_(True),
+                        SenderIdentity.is_active.is_(True),
+                    )
+                )
+
+                sender_identity = result.scalar_one_or_none()
+
+                if not sender_identity:
+                    logger.error(
+                        "Sender identity %s for campaign %s is not verified or active",
+                        campaign.sender_identity_id,
+                        campaign.id,
+                    )
+
+                    campaign.status = "failed"
+                    await db.commit()
+                    return
+
+                sender_value = (
+                    f"{sender_identity.name} "
+                    f"<{sender_identity.email}>"
+                )
+
+                logger.info(
+                    "Campaign %s using sender %s",
+                    campaign.id,
+                    sender_identity.email,
+                )
+
+            # --------------------------------------------------
             # Validate targets
             # --------------------------------------------------
 
@@ -287,7 +334,7 @@ async def dispatch_campaign_emails(campaign_id: str):
                         to_name=user.name,
                         subject=template.subject,
                         html_body=email_html,
-                        sender=template.sender,
+                        sender=sender_value,
                     )
 
                     # Avoid duplicate "sent" events
