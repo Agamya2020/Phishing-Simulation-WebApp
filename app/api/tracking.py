@@ -278,6 +278,16 @@ async def track_click(
         )
     )
 
+    # A user cannot click the email without opening/accessing it.
+    # Record an open if the tracking pixel did not fire.
+    await record_event_once(
+        campaign=campaign,
+        user=user,
+        event_type="opened",
+        counter_field="open_count",
+        db=db,
+    )
+
     await record_event_once(
 
         campaign=campaign,

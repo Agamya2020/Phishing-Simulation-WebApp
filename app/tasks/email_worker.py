@@ -155,7 +155,8 @@ def build_email_html(
     width="1"
     height="1"
     alt=""
-    style="display:none;"
+    border="0"
+    style="width:1px;height:1px;border:0;opacity:0;"
 />
 
 </body>
