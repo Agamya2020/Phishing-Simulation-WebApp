@@ -3,7 +3,13 @@ from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from app.core.db import get_db
-from app.models.models import Campaign, CampaignEvent, Group, User
+from app.models.models import (
+    Campaign,
+    CampaignEvent,
+    Group,
+    User,
+    SenderIdentity,
+)
 from app.schemas.schemas import CampaignCreate, CampaignOut, CampaignUpdate
 from app.tasks.email_worker import dispatch_campaign_emails
 from app.core.security import require_admin
@@ -83,11 +89,30 @@ async def create_campaign(
 
     target_list = list(target_ids)
 
+    # Validate selected sender identity.
+    if payload.sender_identity_id is not None:
+        result = await db.execute(
+            select(SenderIdentity).where(
+                SenderIdentity.id == payload.sender_identity_id,
+                SenderIdentity.is_verified.is_(True),
+                SenderIdentity.is_active.is_(True),
+            )
+        )
+
+        sender_identity = result.scalar_one_or_none()
+
+        if not sender_identity:
+            raise HTTPException(
+                status_code=400,
+                detail="Selected sender is not verified or active.",
+            )
+
     campaign = Campaign(
         name=payload.name,
         description=payload.description or "",
         vector=payload.vector,
         template_id=payload.template_id,
+        sender_identity_id=payload.sender_identity_id,
         group_ids=payload.group_ids,
         target_user_ids=target_list,
         target_count=len(target_list),

@@ -88,15 +88,22 @@ function formatScheduledTime(value) {
 }
 
 async function loadFormData() {
-    const [templatesData, usersData, groupsData] = await Promise.all([
+    const [
+        templatesData,
+        usersData,
+        groupsData,
+        sendersData
+    ] = await Promise.all([
         apiRequest("/api/templates"),
         apiRequest("/api/users"),
-        apiRequest("/api/groups")
+        apiRequest("/api/groups"),
+        apiRequest("/api/senders")
     ]);
 
     renderTemplates(normalizeList(templatesData));
     renderUsers(normalizeList(usersData));
     renderGroups(normalizeList(groupsData));
+    renderSenders(normalizeList(sendersData));
 }
 
 function renderTemplates(templates) {
@@ -107,6 +114,44 @@ function renderTemplates(templates) {
         const option = document.createElement("option");
         option.value = template.id;
         option.textContent = template.name || template.subject || template.id;
+        select.appendChild(option);
+    });
+}
+
+function renderSenders(senders) {
+    const select = document.getElementById("senderSelect");
+
+    select.innerHTML =
+        '<option value="">Select sender</option>';
+
+    const availableSenders = senders.filter(
+        sender =>
+            sender.is_verified === true &&
+            sender.is_active === true
+    );
+
+    if (!availableSenders.length) {
+        const option = document.createElement("option");
+
+        option.value = "";
+        option.textContent =
+            "No verified sender identities available";
+
+        option.disabled = true;
+
+        select.appendChild(option);
+
+        return;
+    }
+
+    availableSenders.forEach(sender => {
+        const option = document.createElement("option");
+
+        option.value = sender.id;
+
+        option.textContent =
+            `${sender.name} <${sender.email}>`;
+
         select.appendChild(option);
     });
 }
@@ -199,13 +244,25 @@ campaignForm.addEventListener("submit", async event => {
     event.preventDefault();
     campaignError.textContent = "";
 
-    const name = document.getElementById("campaignName").value.trim();
-    const templateId = document.getElementById("templateSelect").value;
+    const name =
+        document.getElementById("campaignName").value.trim();
+
+    const templateId =
+        document.getElementById("templateSelect").value;
+
+    const senderIdentityId =
+        document.getElementById("senderSelect").value;
     const userIds = Array.from(document.querySelectorAll(".user-checkbox:checked"))
         .map(checkbox => checkbox.value);
     const groupIds = Array.from(document.querySelectorAll(".group-checkbox:checked"))
         .map(checkbox => checkbox.value);
     const deliveryMode = document.querySelector('input[name="deliveryMode"]:checked').value;
+
+    if (!senderIdentityId) {
+        campaignError.textContent =
+            "Select a sender identity.";
+        return;
+    }
 
     if (!userIds.length && !groupIds.length) {
         campaignError.textContent = "Select at least one user or group.";
@@ -232,6 +289,10 @@ campaignForm.addEventListener("submit", async event => {
         description: "Security awareness simulation",
         vector: "email",
         template_id: templateId,
+
+        sender_identity_id:
+            Number(senderIdentityId),
+
         target_user_ids: userIds,
         group_ids: groupIds,
         scheduled_at: scheduledAt,

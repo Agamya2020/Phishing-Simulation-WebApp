@@ -143,6 +143,7 @@ class CampaignOut(BaseModel):
     status: str
     vector: str
     template_id: Optional[str] = None
+    sender_identity_id: Optional[int] = None
     group_ids: list[str]
     target_user_ids: list[str]
     target_count: int
@@ -164,6 +165,7 @@ class CampaignCreate(BaseModel):
     description: str | None = None
     vector: str = "email"
     template_id: str
+    sender_identity_id: int | None = None
     group_ids: list[str] = Field(default_factory=list)
     target_user_ids: list[str] = Field(default_factory=list)
     scheduled_at: str | None = None
@@ -175,6 +177,7 @@ class CampaignUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     scheduled_at: Optional[str] = None
+    sender_identity_id: Optional[int] = None
 
 
 # ─── Campaign Event ────────────────────────────────────────────────────────────
