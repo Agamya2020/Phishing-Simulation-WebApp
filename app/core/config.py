@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     # Resend
     RESEND_API_KEY: str | None = None
 
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    GOOGLE_REDIRECT_URI: str | None = None
+
+    # Token encryption
+    TOKEN_ENCRYPTION_KEY: str | None = None
+
     # SMTP
     SMTP_HOST: str = "localhost"
     SMTP_PORT: int = 1025
