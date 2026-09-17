@@ -177,16 +177,45 @@ async def google_callback(
             detail="Missing Google OAuth code verifier.",
         )
 
-    flow = create_google_flow(
-        state=state,
-        code_verifier=saved_code_verifier,
-    )
-
     try:
-        flow.fetch_token(
-            code=code,
-            code_verifier=saved_code_verifier,
-        )
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            token_response = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "code": code,
+                    "code_verifier": saved_code_verifier,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                },
+            )
+
+        if token_response.status_code != 200:
+            logger.error(
+                "Google OAuth token exchange failed: status=%s body=%s",
+                token_response.status_code,
+                token_response.text,
+            )
+
+            raise HTTPException(
+                status_code=400,
+                detail="Unable to exchange Google authorization code.",
+            )
+
+        token_data = token_response.json()
+
+        access_token = token_data.get("access_token")
+        refresh_token = token_data.get("refresh_token")
+
+        if not access_token:
+            raise HTTPException(
+                status_code=400,
+                detail="Google did not return an access token.",
+            )
+
+    except HTTPException:
+        raise
 
     except Exception as exc:
         logger.exception(
@@ -198,8 +227,6 @@ async def google_callback(
             status_code=400,
             detail="Unable to exchange Google authorization code.",
         ) from exc
-
-    credentials = flow.credentials
 
     # Obtain the identity of the Google account
     # that actually granted permission.
@@ -215,7 +242,7 @@ async def google_callback(
                 ),
                 headers={
                     "Authorization":
-                        f"Bearer {credentials.token}"
+                        f"Bearer {access_token}"
                 },
             )
 
@@ -268,10 +295,6 @@ async def google_callback(
     )
 
     sender = result.scalar_one_or_none()
-
-    refresh_token = (
-        credentials.refresh_token
-    )
 
     if sender:
         # Reconnecting an existing account.
