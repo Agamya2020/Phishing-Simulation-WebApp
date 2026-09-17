@@ -46,6 +46,7 @@ def create_google_flow(
     state: str | None = None,
     code_verifier: str | None = None,
 ) -> Flow:
+
     if (
         not settings.GOOGLE_CLIENT_ID
         or not settings.GOOGLE_CLIENT_SECRET
@@ -60,12 +61,10 @@ def create_google_flow(
         "web": {
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "auth_uri": (
-                "https://accounts.google.com/o/oauth2/auth"
-            ),
-            "token_uri": (
-                "https://oauth2.googleapis.com/token"
-            ),
+            "auth_uri":
+                "https://accounts.google.com/o/oauth2/auth",
+            "token_uri":
+                "https://oauth2.googleapis.com/token",
             "redirect_uris": [
                 settings.GOOGLE_REDIRECT_URI
             ],
@@ -77,9 +76,7 @@ def create_google_flow(
         scopes=SCOPES,
         state=state,
         code_verifier=code_verifier,
-        autogenerate_code_verifier=(
-            code_verifier is None
-        ),
+        autogenerate_code_verifier=False,
     )
 
     flow.redirect_uri = (
@@ -91,15 +88,19 @@ def create_google_flow(
 
 @router.get("/connect")
 async def connect_google():
-    flow = create_google_flow()
+
+    # Generate our own PKCE verifier.
+    # token_urlsafe(64) produces a valid PKCE-safe value.
+    code_verifier = secrets.token_urlsafe(64)
+
+    flow = create_google_flow(
+        code_verifier=code_verifier,
+    )
 
     authorization_url, state = (
         flow.authorization_url(
             access_type="offline",
             include_granted_scopes="true",
-
-            # Ensures Google asks for consent again,
-            # which helps us obtain a refresh token.
             prompt="consent",
         )
     )
@@ -120,7 +121,7 @@ async def connect_google():
 
     response.set_cookie(
         key="google_oauth_code_verifier",
-        value=flow.code_verifier,
+        value=code_verifier,
         max_age=600,
         httponly=True,
         secure=True,
@@ -183,7 +184,8 @@ async def google_callback(
 
     try:
         flow.fetch_token(
-            code=code
+            code=code,
+            code_verifier=saved_code_verifier,
         )
 
     except Exception as exc:
