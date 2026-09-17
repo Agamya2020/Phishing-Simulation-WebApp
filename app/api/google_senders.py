@@ -1,0 +1,373 @@
+import secrets
+
+import httpx
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+)
+from fastapi.responses import RedirectResponse
+from google_auth_oauthlib.flow import Flow
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.core.db import get_db
+from app.core.security import require_admin
+from app.core.token_crypto import encrypt_token
+from app.models.models import GmailSender
+from app.schemas.schemas import (
+    GmailSenderOut,
+    GmailSenderUpdate,
+)
+
+
+router = APIRouter(
+    prefix="/google",
+    tags=["google-senders"],
+    dependencies=[Depends(require_admin)],
+)
+
+
+SCOPES = [
+    "openid",
+    "email",
+    "https://www.googleapis.com/auth/gmail.send",
+]
+
+
+def create_google_flow(
+    state: str | None = None,
+) -> Flow:
+    if (
+        not settings.GOOGLE_CLIENT_ID
+        or not settings.GOOGLE_CLIENT_SECRET
+        or not settings.GOOGLE_REDIRECT_URI
+    ):
+        raise HTTPException(
+            status_code=500,
+            detail="Google OAuth is not configured.",
+        )
+
+    client_config = {
+        "web": {
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "auth_uri": (
+                "https://accounts.google.com/o/oauth2/auth"
+            ),
+            "token_uri": (
+                "https://oauth2.googleapis.com/token"
+            ),
+            "redirect_uris": [
+                settings.GOOGLE_REDIRECT_URI
+            ],
+        }
+    }
+
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=SCOPES,
+        state=state,
+    )
+
+    flow.redirect_uri = (
+        settings.GOOGLE_REDIRECT_URI
+    )
+
+    return flow
+
+
+@router.get("/connect")
+async def connect_google():
+    flow = create_google_flow()
+
+    authorization_url, state = (
+        flow.authorization_url(
+            access_type="offline",
+            include_granted_scopes="true",
+
+            # Ensures Google asks for consent again,
+            # which helps us obtain a refresh token.
+            prompt="consent",
+        )
+    )
+
+    response = RedirectResponse(
+        url=authorization_url,
+        status_code=302,
+    )
+
+    response.set_cookie(
+        key="google_oauth_state",
+        value=state,
+        max_age=600,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+    )
+
+    return response
+
+
+@router.get("/callback")
+async def google_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    if error:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Google authorization failed: {error}",
+        )
+
+    if not code or not state:
+        raise HTTPException(
+            status_code=400,
+            detail="Missing Google authorization response.",
+        )
+
+    saved_state = request.cookies.get(
+        "google_oauth_state"
+    )
+
+    if (
+        not saved_state
+        or not secrets.compare_digest(
+            saved_state,
+            state,
+        )
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid Google OAuth state.",
+        )
+
+    flow = create_google_flow(
+        state=state
+    )
+
+    try:
+        flow.fetch_token(
+            code=code
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Unable to exchange Google "
+                "authorization code."
+            ),
+        ) from exc
+
+    credentials = flow.credentials
+
+    # Obtain the identity of the Google account
+    # that actually granted permission.
+    try:
+        async with httpx.AsyncClient(
+            timeout=20.0
+        ) as client:
+
+            profile_response = await client.get(
+                (
+                    "https://openidconnect."
+                    "googleapis.com/v1/userinfo"
+                ),
+                headers={
+                    "Authorization":
+                        f"Bearer {credentials.token}"
+                },
+            )
+
+            profile_response.raise_for_status()
+
+            profile = profile_response.json()
+
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Unable to retrieve the connected "
+                "Google account."
+            ),
+        ) from exc
+
+    email = str(
+        profile.get("email") or ""
+    ).lower().strip()
+
+    google_subject_id = str(
+        profile.get("sub") or ""
+    ).strip()
+
+    email_verified = bool(
+        profile.get("email_verified")
+    )
+
+    if (
+        not email
+        or not google_subject_id
+        or not email_verified
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Google did not return a verified "
+                "email identity."
+            ),
+        )
+
+    result = await db.execute(
+        select(GmailSender).where(
+            or_(
+                GmailSender.email == email,
+                GmailSender.google_subject_id
+                == google_subject_id,
+            )
+        )
+    )
+
+    sender = result.scalar_one_or_none()
+
+    refresh_token = (
+        credentials.refresh_token
+    )
+
+    if sender:
+        # Reconnecting an existing account.
+        sender.email = email
+        sender.google_subject_id = (
+            google_subject_id
+        )
+        sender.is_active = True
+
+        if refresh_token:
+            sender.encrypted_refresh_token = (
+                encrypt_token(refresh_token)
+            )
+
+    else:
+        if not refresh_token:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Google did not return a refresh "
+                    "token. Reconnect the account "
+                    "and grant consent."
+                ),
+            )
+
+        sender = GmailSender(
+            email=email,
+            display_name=email,
+            google_subject_id=google_subject_id,
+            encrypted_refresh_token=(
+                encrypt_token(refresh_token)
+            ),
+            is_active=True,
+        )
+
+        db.add(sender)
+
+    await db.commit()
+    await db.refresh(sender)
+
+    response = RedirectResponse(
+        url="/admin/senders?gmail=connected",
+        status_code=302,
+    )
+
+    response.delete_cookie(
+        "google_oauth_state"
+    )
+
+    return response
+
+
+@router.get(
+    "/senders",
+    response_model=list[GmailSenderOut],
+)
+async def list_gmail_senders(
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(GmailSender)
+        .order_by(GmailSender.created_at.desc())
+    )
+
+    return result.scalars().all()
+
+
+@router.patch(
+    "/senders/{sender_id}",
+    response_model=GmailSenderOut,
+)
+async def update_gmail_sender(
+    sender_id: int,
+    payload: GmailSenderUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(GmailSender)
+        .where(GmailSender.id == sender_id)
+    )
+
+    sender = result.scalar_one_or_none()
+
+    if not sender:
+        raise HTTPException(
+            status_code=404,
+            detail="Gmail sender not found.",
+        )
+
+    values = payload.model_dump(
+        exclude_none=True
+    )
+
+    for field, value in values.items():
+        setattr(sender, field, value)
+
+    await db.commit()
+    await db.refresh(sender)
+
+    return sender
+
+
+@router.delete("/senders/{sender_id}")
+async def disconnect_gmail_sender(
+    sender_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(GmailSender)
+        .where(GmailSender.id == sender_id)
+    )
+
+    sender = result.scalar_one_or_none()
+
+    if not sender:
+        raise HTTPException(
+            status_code=404,
+            detail="Gmail sender not found.",
+        )
+
+    sender.is_active = False
+
+    # Remove access to the stored Google authorization
+    # while preserving the sender row for historical campaigns.
+    sender.encrypted_refresh_token = ""
+
+    await db.commit()
+
+    return {
+        "ok": True,
+        "message": "Gmail sender disconnected.",
+    }

@@ -149,6 +149,21 @@ class SenderIdentityUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class GmailSenderOut(BaseModel):
+    id: int
+    email: EmailStr
+    display_name: str
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class GmailSenderUpdate(BaseModel):
+    display_name: str | None = None
+    is_active: bool | None = None
+
+
 # ─── Campaign ──────────────────────────────────────────────────────────────────
 
 class CampaignOut(BaseModel):
@@ -159,6 +174,7 @@ class CampaignOut(BaseModel):
     vector: str
     template_id: Optional[str] = None
     sender_identity_id: Optional[int] = None
+    gmail_sender_id: Optional[int] = None
     group_ids: list[str]
     target_user_ids: list[str]
     target_count: int
@@ -181,6 +197,7 @@ class CampaignCreate(BaseModel):
     vector: str = "email"
     template_id: str
     sender_identity_id: int | None = None
+    gmail_sender_id: int | None = None
     group_ids: list[str] = Field(default_factory=list)
     target_user_ids: list[str] = Field(default_factory=list)
     scheduled_at: str | None = None
@@ -193,6 +210,7 @@ class CampaignUpdate(BaseModel):
     status: Optional[str] = None
     scheduled_at: Optional[str] = None
     sender_identity_id: Optional[int] = None
+    gmail_sender_id: Optional[int] = None
 
 
 # ─── Campaign Event ────────────────────────────────────────────────────────────

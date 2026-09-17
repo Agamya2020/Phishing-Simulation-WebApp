@@ -13,7 +13,9 @@ from app.models.models import (
     CampaignEvent,
     SenderIdentity,
     SenderDomain,
+    GmailSender,
 )
+from app.core.gmail_mailer import send_gmail_email
 from app.core.mailer import send_email
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal
@@ -229,12 +231,63 @@ async def dispatch_campaign_emails(campaign_id: str):
                 return
 
             # --------------------------------------------------
-            # Load campaign sender identity
+            # Resolve campaign sender
             # --------------------------------------------------
 
             sender_value = None
+            gmail_sender = None
 
-            if campaign.sender_identity_id is not None:
+            if (
+                campaign.sender_identity_id is not None
+                and campaign.gmail_sender_id is not None
+            ):
+                logger.error(
+                    "Campaign %s has multiple sender providers configured",
+                    campaign.id,
+                )
+
+                campaign.status = "failed"
+                await db.commit()
+                return
+
+            # --------------------------------------------------
+            # Gmail sender
+            # --------------------------------------------------
+
+            if campaign.gmail_sender_id is not None:
+
+                result = await db.execute(
+                    select(GmailSender).where(
+                        GmailSender.id == campaign.gmail_sender_id,
+                        GmailSender.is_active.is_(True),
+                    )
+                )
+
+                gmail_sender = result.scalar_one_or_none()
+
+                if not gmail_sender:
+
+                    logger.error(
+                        "Gmail sender for campaign %s "
+                        "is not available or active",
+                        campaign.id,
+                    )
+
+                    campaign.status = "failed"
+                    await db.commit()
+                    return
+
+                logger.info(
+                    "Campaign %s using Gmail sender %s",
+                    campaign.id,
+                    gmail_sender.email,
+                )
+
+            # --------------------------------------------------
+            # Resend sender
+            # --------------------------------------------------
+
+            elif campaign.sender_identity_id is not None:
 
                 result = await db.execute(
                     select(SenderIdentity, SenderDomain)
@@ -273,7 +326,7 @@ async def dispatch_campaign_emails(campaign_id: str):
                 )
 
                 logger.info(
-                    "Campaign %s using sender %s via verified domain %s",
+                    "Campaign %s using Resend sender %s via domain %s",
                     campaign.id,
                     sender_identity.email,
                     sender_domain.domain,
@@ -341,13 +394,25 @@ async def dispatch_campaign_emails(campaign_id: str):
                         tracking_url=tracking_url,
                     )
 
-                    await send_email(
-                        to_email=user.email,
-                        to_name=user.name,
-                        subject=template.subject,
-                        html_body=email_html,
-                        sender=sender_value,
-                    )
+                    if gmail_sender:
+
+                        await send_gmail_email(
+                            gmail_sender=gmail_sender,
+                            to_email=user.email,
+                            to_name=user.name,
+                            subject=template.subject,
+                            html_body=email_html,
+                        )
+
+                    else:
+
+                        await send_email(
+                            to_email=user.email,
+                            to_name=user.name,
+                            subject=template.subject,
+                            html_body=email_html,
+                            sender=sender_value,
+                        )
 
                     # Avoid duplicate "sent" events
                     existing = await db.execute(

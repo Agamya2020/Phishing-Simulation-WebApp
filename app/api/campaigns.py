@@ -10,6 +10,7 @@ from app.models.models import (
     User,
     SenderIdentity,
     SenderDomain,
+    GmailSender,
 )
 from app.schemas.schemas import CampaignCreate, CampaignOut, CampaignUpdate
 from app.tasks.email_worker import dispatch_campaign_emails
@@ -90,6 +91,24 @@ async def create_campaign(
 
     target_list = list(target_ids)
 
+    if (
+        payload.sender_identity_id is not None
+        and payload.gmail_sender_id is not None
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Select only one sender provider.",
+        )
+
+    if (
+        payload.sender_identity_id is None
+        and payload.gmail_sender_id is None
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Select a sender identity.",
+        )
+
     # Validate selected sender identity.
     if payload.sender_identity_id is not None:
         result = await db.execute(
@@ -118,12 +137,29 @@ async def create_campaign(
                 ),
             )
 
+    if payload.gmail_sender_id is not None:
+        result = await db.execute(
+            select(GmailSender).where(
+                GmailSender.id == payload.gmail_sender_id,
+                GmailSender.is_active.is_(True),
+            )
+        )
+
+        gmail_sender = result.scalar_one_or_none()
+
+        if not gmail_sender:
+            raise HTTPException(
+                status_code=400,
+                detail="Selected Gmail sender is not active.",
+            )
+
     campaign = Campaign(
         name=payload.name,
         description=payload.description or "",
         vector=payload.vector,
         template_id=payload.template_id,
         sender_identity_id=payload.sender_identity_id,
+        gmail_sender_id=payload.gmail_sender_id,
         group_ids=payload.group_ids,
         target_user_ids=target_list,
         target_count=len(target_list),

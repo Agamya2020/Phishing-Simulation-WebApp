@@ -92,18 +92,24 @@ async function loadFormData() {
         templatesData,
         usersData,
         groupsData,
-        sendersData
+        resendSendersData,
+        gmailSendersData
     ] = await Promise.all([
         apiRequest("/api/templates"),
         apiRequest("/api/users"),
         apiRequest("/api/groups"),
-        apiRequest("/api/senders")
+        apiRequest("/api/senders"),
+        apiRequest("/api/google/senders")
     ]);
 
     renderTemplates(normalizeList(templatesData));
     renderUsers(normalizeList(usersData));
     renderGroups(normalizeList(groupsData));
-    renderSenders(normalizeList(sendersData));
+
+    renderSenders(
+        normalizeList(resendSendersData),
+        normalizeList(gmailSendersData)
+    );
 }
 
 function renderTemplates(templates) {
@@ -118,42 +124,101 @@ function renderTemplates(templates) {
     });
 }
 
-function renderSenders(senders) {
-    const select = document.getElementById("senderSelect");
+function renderSenders(
+    resendSenders,
+    gmailSenders
+) {
+    const select =
+        document.getElementById("senderSelect");
 
     select.innerHTML =
         '<option value="">Select sender</option>';
 
-    const availableSenders = senders.filter(
-        sender =>
-            sender.is_verified === true &&
-            sender.is_active === true
-    );
 
-    if (!availableSenders.length) {
-        const option = document.createElement("option");
+    const activeResendSenders =
+        resendSenders.filter(
+            sender =>
+                sender.is_verified === true &&
+                sender.is_active === true
+        );
 
-        option.value = "";
-        option.textContent =
-            "No verified sender identities available";
 
-        option.disabled = true;
+    const activeGmailSenders =
+        gmailSenders.filter(
+            sender =>
+                sender.is_active === true
+        );
 
-        select.appendChild(option);
 
-        return;
+    if (activeResendSenders.length) {
+
+        const group =
+            document.createElement("optgroup");
+
+        group.label = "Resend";
+
+
+        activeResendSenders.forEach(sender => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                `resend:${sender.id}`;
+
+            option.textContent =
+                `${sender.name} <${sender.email}>`;
+
+            group.appendChild(option);
+        });
+
+
+        select.appendChild(group);
     }
 
-    availableSenders.forEach(sender => {
-        const option = document.createElement("option");
 
-        option.value = sender.id;
+    if (activeGmailSenders.length) {
+
+        const group =
+            document.createElement("optgroup");
+
+        group.label = "Google / Gmail";
+
+
+        activeGmailSenders.forEach(sender => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                `gmail:${sender.id}`;
+
+            option.textContent =
+                `${sender.display_name || sender.email} <${sender.email}>`;
+
+            group.appendChild(option);
+        });
+
+
+        select.appendChild(group);
+    }
+
+
+    if (
+        !activeResendSenders.length &&
+        !activeGmailSenders.length
+    ) {
+        const option =
+            document.createElement("option");
+
+        option.value = "";
+        option.disabled = true;
 
         option.textContent =
-            `${sender.name} <${sender.email}>`;
+            "No active sender identities available";
 
         select.appendChild(option);
-    });
+    }
 }
 
 function renderUsers(users) {
@@ -250,7 +315,7 @@ campaignForm.addEventListener("submit", async event => {
     const templateId =
         document.getElementById("templateSelect").value;
 
-    const senderIdentityId =
+    const senderSelection =
         document.getElementById("senderSelect").value;
     const userIds = Array.from(document.querySelectorAll(".user-checkbox:checked"))
         .map(checkbox => checkbox.value);
@@ -258,9 +323,26 @@ campaignForm.addEventListener("submit", async event => {
         .map(checkbox => checkbox.value);
     const deliveryMode = document.querySelector('input[name="deliveryMode"]:checked').value;
 
-    if (!senderIdentityId) {
+    if (!senderSelection) {
         campaignError.textContent =
             "Select a sender identity.";
+        return;
+    }
+
+    const [
+        senderProvider,
+        senderIdValue
+    ] = senderSelection.split(":");
+
+    const senderId =
+        Number(senderIdValue);
+
+    if (
+        !senderProvider ||
+        !Number.isInteger(senderId)
+    ) {
+        campaignError.textContent =
+            "Invalid sender selection.";
         return;
     }
 
@@ -291,7 +373,14 @@ campaignForm.addEventListener("submit", async event => {
         template_id: templateId,
 
         sender_identity_id:
-            Number(senderIdentityId),
+            senderProvider === "resend"
+                ? senderId
+                : null,
+
+        gmail_sender_id:
+            senderProvider === "gmail"
+                ? senderId
+                : null,
 
         target_user_ids: userIds,
         group_ids: groupIds,

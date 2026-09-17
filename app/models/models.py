@@ -134,6 +134,52 @@ class SenderIdentity(Base):
     )
 
 
+class GmailSender(Base):
+    __tablename__ = "gmail_senders"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    email: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    display_name: Mapped[str] = mapped_column(
+        String(255),
+        default="",
+        nullable=False,
+    )
+
+    google_subject_id: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=False,
+    )
+
+    encrypted_refresh_token: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
 class Campaign(Base):
     __tablename__ = "campaigns"
 
@@ -146,6 +192,11 @@ class Campaign(Base):
     sender_identity_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("sender_identities.id"),
+        nullable=True,
+    )
+    gmail_sender_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("gmail_senders.id"),
         nullable=True,
     )
     group_ids: Mapped[list] = mapped_column(ARRAY(String), default=list)
@@ -166,6 +217,7 @@ class Campaign(Base):
 
     template: Mapped["Template"] = relationship("Template", lazy="select")
     sender_identity: Mapped["SenderIdentity"] = relationship("SenderIdentity")
+    gmail_sender: Mapped["GmailSender"] = relationship("GmailSender")
     events: Mapped[list["CampaignEvent"]] = relationship("CampaignEvent", back_populates="campaign", lazy="select")
 
 

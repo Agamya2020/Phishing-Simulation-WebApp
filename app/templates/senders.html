@@ -51,13 +51,22 @@
             </p>
         </div>
 
-        <button
-            id="newSenderButton"
-            class="primary-action-button"
-            type="button"
-        >
-            + Add Sender
-        </button>
+        <div class="action-buttons">
+            <a
+                href="/api/google/connect"
+                class="secondary-button"
+            >
+                Connect Gmail
+            </a>
+
+            <button
+                id="newSenderButton"
+                class="primary-action-button"
+                type="button"
+            >
+                + Add Resend Sender
+            </button>
+        </div>
     </header>
 
 
@@ -80,9 +89,10 @@
 
                 <thead>
                 <tr>
+                    <th>Provider</th>
                     <th>Sender Name</th>
                     <th>Email Address</th>
-                    <th>Domain</th>
+                    <th>Domain / Account</th>
                     <th>Verification</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -92,7 +102,7 @@
                 <tbody id="senderTable">
 
                 <tr>
-                    <td colspan="6">
+                    <td colspan="7">
                         Loading sender identities...
                     </td>
                 </tr>
@@ -123,10 +133,10 @@
         <div class="modal-header">
 
             <div>
-                <h2 id="senderModalTitle">Add Sender</h2>
+                <h2 id="senderModalTitle">Add Resend Sender</h2>
 
                 <p>
-                    Add an authorized sender identity.
+                    Add a sender from one of your verified domains.
                 </p>
             </div>
 

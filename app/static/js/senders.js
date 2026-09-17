@@ -1,12 +1,21 @@
-const senderTable = document.getElementById("senderTable");
+const senderTable =
+    document.getElementById("senderTable");
 
-const senderModal = document.getElementById("senderModal");
-const senderForm = document.getElementById("senderForm");
+const senderModal =
+    document.getElementById("senderModal");
 
-const senderError = document.getElementById("senderError");
-const saveSenderButton = document.getElementById("saveSenderButton");
+const senderForm =
+    document.getElementById("senderForm");
 
-let loadedSenders = [];
+const senderError =
+    document.getElementById("senderError");
+
+const saveSenderButton =
+    document.getElementById("saveSenderButton");
+
+
+let resendSenders = [];
+let gmailSenders = [];
 
 
 function escapeHtml(value) {
@@ -19,15 +28,42 @@ function escapeHtml(value) {
 }
 
 
+function normalizeList(data) {
+    if (Array.isArray(data)) {
+        return data;
+    }
+
+    if (data && Array.isArray(data.items)) {
+        return data.items;
+    }
+
+    if (data && Array.isArray(data.data)) {
+        return data.data;
+    }
+
+    return [];
+}
+
+
 async function loadSenders() {
 
     try {
 
-        const data = await apiRequest("/api/senders");
+        const [
+            resendData,
+            gmailData
+        ] = await Promise.all([
+            apiRequest("/api/senders"),
+            apiRequest("/api/google/senders")
+        ]);
 
-        loadedSenders = Array.isArray(data)
-            ? data
-            : [];
+
+        resendSenders =
+            normalizeList(resendData);
+
+        gmailSenders =
+            normalizeList(gmailData);
+
 
         renderSenders();
 
@@ -37,7 +73,7 @@ async function loadSenders() {
 
         senderTable.innerHTML = `
             <tr>
-                <td colspan="6">
+                <td colspan="7">
                     Failed to load sender identities.
                 </td>
             </tr>
@@ -48,33 +84,23 @@ async function loadSenders() {
 
 function renderSenders() {
 
-    if (!loadedSenders.length) {
+    const rows = [];
 
-        senderTable.innerHTML = `
+
+    // -------------------------------------------------
+    // Resend senders
+    // -------------------------------------------------
+
+    resendSenders.forEach(sender => {
+
+        rows.push(`
             <tr>
-                <td colspan="6">
-                    No sender identities configured.
+
+                <td>
+                    <span class="status-badge">
+                        Resend
+                    </span>
                 </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-
-    senderTable.innerHTML = loadedSenders.map(sender => {
-
-        const verification = sender.is_verified
-            ? "Verified"
-            : "Pending";
-
-        const status = sender.is_active
-            ? "Active"
-            : "Inactive";
-
-
-        return `
-            <tr>
 
                 <td>
                     <strong>
@@ -92,13 +118,21 @@ function renderSenders() {
 
                 <td>
                     <span class="status-badge">
-                        ${verification}
+                        ${
+                            sender.is_verified
+                                ? "Verified"
+                                : "Not Verified"
+                        }
                     </span>
                 </td>
 
                 <td>
                     <span class="status-badge">
-                        ${status}
+                        ${
+                            sender.is_active
+                                ? "Active"
+                                : "Inactive"
+                        }
                     </span>
                 </td>
 
@@ -107,7 +141,7 @@ function renderSenders() {
                     <div class="action-buttons">
 
                         <button
-                            class="table-action-button toggle-sender-button"
+                            class="table-action-button toggle-resend-button"
                             data-sender-id="${sender.id}"
                             type="button"
                         >
@@ -118,9 +152,8 @@ function renderSenders() {
                             }
                         </button>
 
-
                         <button
-                            class="danger-button delete-sender-button"
+                            class="danger-button delete-resend-button"
                             data-sender-id="${sender.id}"
                             type="button"
                         >
@@ -132,9 +165,107 @@ function renderSenders() {
                 </td>
 
             </tr>
+        `);
+    });
+
+
+    // -------------------------------------------------
+    // Gmail senders
+    // -------------------------------------------------
+
+    gmailSenders.forEach(sender => {
+
+        rows.push(`
+            <tr>
+
+                <td>
+                    <span class="status-badge">
+                        Gmail
+                    </span>
+                </td>
+
+                <td>
+                    <strong>
+                        ${escapeHtml(
+                            sender.display_name ||
+                            sender.email
+                        )}
+                    </strong>
+                </td>
+
+                <td>
+                    ${escapeHtml(sender.email)}
+                </td>
+
+                <td>
+                    Google Account
+                </td>
+
+                <td>
+                    <span class="status-badge">
+                        OAuth Connected
+                    </span>
+                </td>
+
+                <td>
+                    <span class="status-badge">
+                        ${
+                            sender.is_active
+                                ? "Active"
+                                : "Inactive"
+                        }
+                    </span>
+                </td>
+
+                <td>
+
+                    <div class="action-buttons">
+
+                        <button
+                            class="table-action-button toggle-gmail-button"
+                            data-sender-id="${sender.id}"
+                            type="button"
+                        >
+                            ${
+                                sender.is_active
+                                    ? "Disable"
+                                    : "Enable"
+                            }
+                        </button>
+
+                        <button
+                            class="danger-button disconnect-gmail-button"
+                            data-sender-id="${sender.id}"
+                            type="button"
+                        >
+                            Disconnect
+                        </button>
+
+                    </div>
+
+                </td>
+
+            </tr>
+        `);
+    });
+
+
+    if (!rows.length) {
+
+        senderTable.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    No sender identities configured.
+                </td>
+            </tr>
         `;
 
-    }).join("");
+        return;
+    }
+
+
+    senderTable.innerHTML =
+        rows.join("");
 }
 
 
@@ -162,6 +293,10 @@ function closeSenderModal() {
 }
 
 
+// -------------------------------------------------
+// Create Resend sender
+// -------------------------------------------------
+
 senderForm.addEventListener(
     "submit",
     async event => {
@@ -188,7 +323,6 @@ senderForm.addEventListener(
 
 
         saveSenderButton.disabled = true;
-
         saveSenderButton.textContent =
             "Adding...";
 
@@ -217,7 +351,6 @@ senderForm.addEventListener(
         } finally {
 
             saveSenderButton.disabled = false;
-
             saveSenderButton.textContent =
                 "Add Sender";
         }
@@ -225,34 +358,14 @@ senderForm.addEventListener(
 );
 
 
-async function updateSender(
-    senderId,
-    payload
-) {
+// -------------------------------------------------
+// Resend enable / disable
+// -------------------------------------------------
 
-    try {
-
-        await apiRequest(
-            `/api/senders/${encodeURIComponent(senderId)}`,
-            {
-                method: "PATCH",
-                body: JSON.stringify(payload)
-            }
-        );
-
-        await loadSenders();
-
-    } catch (error) {
-
-        window.alert(error.message);
-    }
-}
-
-
-async function deleteSender(senderId) {
+async function toggleResend(senderId) {
 
     const sender =
-        loadedSenders.find(
+        resendSenders.find(
             item =>
                 String(item.id) ===
                 String(senderId)
@@ -260,22 +373,106 @@ async function deleteSender(senderId) {
 
 
     if (!sender) {
-
-        window.alert(
-            "Sender identity not found."
-        );
-
         return;
     }
 
 
-    const confirmed =
-        window.confirm(
-            `Delete sender "${sender.email}"?`
+    try {
+
+        await apiRequest(
+            `/api/senders/${encodeURIComponent(senderId)}`,
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    is_active:
+                        !sender.is_active
+                })
+            }
         );
 
 
-    if (!confirmed) {
+        await loadSenders();
+
+
+    } catch (error) {
+
+        window.alert(
+            error.message
+        );
+    }
+}
+
+
+// -------------------------------------------------
+// Gmail enable / disable
+// -------------------------------------------------
+
+async function toggleGmail(senderId) {
+
+    const sender =
+        gmailSenders.find(
+            item =>
+                String(item.id) ===
+                String(senderId)
+        );
+
+
+    if (!sender) {
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            `/api/google/senders/${encodeURIComponent(senderId)}`,
+            {
+                method: "PATCH",
+
+                body: JSON.stringify({
+                    is_active:
+                        !sender.is_active
+                })
+            }
+        );
+
+
+        await loadSenders();
+
+
+    } catch (error) {
+
+        window.alert(
+            error.message
+        );
+    }
+}
+
+
+// -------------------------------------------------
+// Delete Resend
+// -------------------------------------------------
+
+async function deleteResend(senderId) {
+
+    const sender =
+        resendSenders.find(
+            item =>
+                String(item.id) ===
+                String(senderId)
+        );
+
+
+    if (!sender) {
+        return;
+    }
+
+
+    if (
+        !window.confirm(
+            `Delete sender "${sender.email}"?`
+        )
+    ) {
         return;
     }
 
@@ -289,67 +486,144 @@ async function deleteSender(senderId) {
             }
         );
 
+
         await loadSenders();
+
 
     } catch (error) {
 
-        window.alert(error.message);
+        window.alert(
+            error.message
+        );
     }
 }
 
 
+// -------------------------------------------------
+// Disconnect Gmail
+// -------------------------------------------------
+
+async function disconnectGmail(senderId) {
+
+    const sender =
+        gmailSenders.find(
+            item =>
+                String(item.id) ===
+                String(senderId)
+        );
+
+
+    if (!sender) {
+        return;
+    }
+
+
+    if (
+        !window.confirm(
+            `Disconnect Gmail account "${sender.email}" from PhishGuard?`
+        )
+    ) {
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            `/api/google/senders/${encodeURIComponent(senderId)}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+
+        await loadSenders();
+
+
+    } catch (error) {
+
+        window.alert(
+            error.message
+        );
+    }
+}
+
+
+// -------------------------------------------------
+// Table actions
+// -------------------------------------------------
+
 senderTable.addEventListener(
     "click",
-    async event => {
+    event => {
 
-        const toggleButton =
+        const resendToggle =
             event.target.closest(
-                ".toggle-sender-button"
+                ".toggle-resend-button"
             );
 
 
-        if (toggleButton) {
+        if (resendToggle) {
 
-            const sender =
-                loadedSenders.find(
-                    item =>
-                        String(item.id) ===
-                        String(toggleButton.dataset.senderId)
-                );
-
-
-            if (!sender) {
-                return;
-            }
-
-
-            await updateSender(
-                sender.id,
-                {
-                    is_active:
-                        !sender.is_active
-                }
+            toggleResend(
+                resendToggle.dataset.senderId
             );
 
             return;
         }
 
 
-        const deleteButton =
+        const gmailToggle =
             event.target.closest(
-                ".delete-sender-button"
+                ".toggle-gmail-button"
             );
 
 
-        if (deleteButton) {
+        if (gmailToggle) {
 
-            await deleteSender(
-                deleteButton.dataset.senderId
+            toggleGmail(
+                gmailToggle.dataset.senderId
+            );
+
+            return;
+        }
+
+
+        const resendDelete =
+            event.target.closest(
+                ".delete-resend-button"
+            );
+
+
+        if (resendDelete) {
+
+            deleteResend(
+                resendDelete.dataset.senderId
+            );
+
+            return;
+        }
+
+
+        const gmailDisconnect =
+            event.target.closest(
+                ".disconnect-gmail-button"
+            );
+
+
+        if (gmailDisconnect) {
+
+            disconnectGmail(
+                gmailDisconnect.dataset.senderId
             );
         }
     }
 );
 
+
+// -------------------------------------------------
+// Modal controls
+// -------------------------------------------------
 
 document
     .getElementById("newSenderButton")
@@ -406,6 +680,34 @@ document
         "click",
         logoutAdmin
     );
+
+
+// -------------------------------------------------
+// Google OAuth result
+// -------------------------------------------------
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+
+if (
+    params.get("gmail") ===
+    "connected"
+) {
+
+    window.alert(
+        "Gmail account connected successfully."
+    );
+
+
+    window.history.replaceState(
+        {},
+        "",
+        "/admin/senders"
+    );
+}
 
 
 loadSenders();

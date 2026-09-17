@@ -12,6 +12,7 @@ from app.core.startup import log_environment, verify_database
 from app.api.auth import router as auth_router
 from app.api.campaigns import router as campaigns_router
 from app.api.domains import router as domains_router
+from app.api.google_senders import router as google_senders_router
 from app.api.senders import router as senders_router
 from app.api.tracking import router as tracking_router
 from app.api.data import users_router, groups_router, templates_router, departments_router
@@ -107,6 +108,7 @@ app.include_router(templates_router, prefix="/api")
 app.include_router(departments_router, prefix="/api")
 app.include_router(senders_router, prefix="/api")
 app.include_router(domains_router, prefix="/api")
+app.include_router(google_senders_router, prefix="/api")
 app.include_router(web_router)
 
 
