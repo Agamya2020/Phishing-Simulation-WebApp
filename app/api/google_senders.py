@@ -44,6 +44,7 @@ SCOPES = [
 
 def create_google_flow(
     state: str | None = None,
+    code_verifier: str | None = None,
 ) -> Flow:
     if (
         not settings.GOOGLE_CLIENT_ID
@@ -75,6 +76,10 @@ def create_google_flow(
         client_config,
         scopes=SCOPES,
         state=state,
+        code_verifier=code_verifier,
+        autogenerate_code_verifier=(
+            code_verifier is None
+        ),
     )
 
     flow.redirect_uri = (
@@ -113,6 +118,15 @@ async def connect_google():
         samesite="lax",
     )
 
+    response.set_cookie(
+        key="google_oauth_code_verifier",
+        value=flow.code_verifier,
+        max_age=600,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+    )
+
     return response
 
 
@@ -140,6 +154,10 @@ async def google_callback(
         "google_oauth_state"
     )
 
+    saved_code_verifier = request.cookies.get(
+        "google_oauth_code_verifier"
+    )
+
     if (
         not saved_state
         or not secrets.compare_digest(
@@ -152,8 +170,15 @@ async def google_callback(
             detail="Invalid Google OAuth state.",
         )
 
+    if not saved_code_verifier:
+        raise HTTPException(
+            status_code=400,
+            detail="Missing Google OAuth code verifier.",
+        )
+
     flow = create_google_flow(
-        state=state
+        state=state,
+        code_verifier=saved_code_verifier,
     )
 
     try:
@@ -292,6 +317,10 @@ async def google_callback(
 
     response.delete_cookie(
         "google_oauth_state"
+    )
+
+    response.delete_cookie(
+        "google_oauth_code_verifier"
     )
 
     return response
