@@ -1,3 +1,4 @@
+import logging
 import secrets
 
 import httpx
@@ -22,6 +23,9 @@ from app.schemas.schemas import (
     GmailSenderOut,
     GmailSenderUpdate,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -158,12 +162,14 @@ async def google_callback(
         )
 
     except Exception as exc:
+        logger.exception(
+            "Google OAuth token exchange failed: %s",
+            exc,
+        )
+
         raise HTTPException(
             status_code=400,
-            detail=(
-                "Unable to exchange Google "
-                "authorization code."
-            ),
+            detail="Unable to exchange Google authorization code.",
         ) from exc
 
     credentials = flow.credentials
