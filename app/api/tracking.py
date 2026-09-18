@@ -346,149 +346,239 @@ async def phishing_landing_page(
 
     page = f"""
 <!DOCTYPE html>
-
-<html>
-
+<html lang="en">
 <head>
-
 <meta charset="UTF-8">
-
 <meta
     name="viewport"
     content="width=device-width, initial-scale=1"
 >
-
-<title>Corporate Sign In</title>
-
+<title>Sign in</title>
 <style>
+* {{
+    box-sizing: border-box;
+}}
 
 body {{
+    align-items: center;
+    background: #fff;
+    color: #202124;
+    display: flex;
+    font-family: Arial, Helvetica, sans-serif;
+    justify-content: center;
     margin: 0;
-    background: #f5f6f8;
-    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    padding: 24px;
 }}
 
-.container {{
-    max-width: 420px;
-    margin: 80px auto;
-}}
-
-.card {{
-    background: white;
+.login-card {{
+    border: 1px solid #dadce0;
     border-radius: 8px;
-    padding: 36px;
-    box-shadow:
-        0 3px 18px
-        rgba(0,0,0,.10);
-}}
-
-h2 {{
-    margin-top: 0;
-}}
-
-label {{
-    display: block;
-    margin-top: 18px;
-    margin-bottom: 6px;
-}}
-
-input {{
+    max-width: 450px;
+    padding: 44px 40px 36px;
+    text-align: center;
     width: 100%;
-    box-sizing: border-box;
-    padding: 11px;
-    border: 1px solid #bbb;
-    border-radius: 5px;
+}}
+
+.logo {{
+    height: 32px;
+    margin-bottom: 12px;
+}}
+
+.g {{
+    background: conic-gradient(
+        from -45deg,
+        #4285f4 0 25%,
+        #34a853 25% 40%,
+        #fbbc05 40% 65%,
+        #ea4335 65% 82%,
+        #4285f4 82% 100%
+    );
+    background-clip: text;
+    color: transparent;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 32px;
+}}
+
+h1 {{
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.3333;
+    margin: 0;
+}}
+
+.subtitle {{
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 8px 0 32px;
+}}
+
+.field + .field {{
+    margin-top: 16px;
+}}
+
+.field input {{
+    background: transparent;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    color: #202124;
+    font-size: 16px;
+    height: 56px;
+    outline: none;
+    padding: 13px 15px;
+    width: 100%;
+}}
+
+.field input:focus {{
+    border: 2px solid #1a73e8;
+    padding: 12px 14px;
+}}
+
+.forgot {{
+    color: #1a73e8;
+    cursor: default;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 10px;
+    text-align: left;
+}}
+
+.actions {{
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 38px;
+}}
+
+.create-account {{
+    color: #1a73e8;
+    cursor: default;
+    font-size: 14px;
+    font-weight: 600;
 }}
 
 button {{
-    width: 100%;
-    padding: 12px;
+    background: #1a73e8;
     border: 0;
-    border-radius: 5px;
-    background: #1769e0;
-    color: white;
-    font-weight: bold;
-    margin-top: 24px;
+    border-radius: 4px;
+    color: #fff;
     cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 36px;
+    padding: 9px 24px;
 }}
 
-.help {{
-    color: #777;
-    font-size: 12px;
-    margin-top: 20px;
+button:hover {{
+    background: #1b66c9;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, .3);
 }}
 
+button:disabled {{
+    cursor: default;
+    opacity: .7;
+}}
+
+.sr-only {{
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}}
+
+@media (max-width: 520px) {{
+    body {{
+        align-items: flex-start;
+        padding: 0;
+    }}
+
+    .login-card {{
+        border: 0;
+        padding: 36px 24px;
+    }}
+}}
 </style>
-
 </head>
-
 <body>
+<main class="login-card">
+    <div class="logo" aria-label="Google">
+        <span class="g" aria-hidden="true">G</span>
+    </div>
 
-<div class="container">
+    <h1>Sign in</h1>
+    <p class="subtitle">Use your account</p>
 
-<div class="card">
+    <form id="simulation-login">
+        <div class="field">
+            <label class="sr-only" for="sim-email">
+                Email or phone
+            </label>
+            <input
+                type="email"
+                id="sim-email"
+                placeholder="Email or phone"
+                autocomplete="off"
+                required
+            >
+        </div>
 
-<h2>Corporate Account</h2>
+        <div class="field">
+            <label class="sr-only" for="sim-password">
+                Password
+            </label>
+            <input
+                type="password"
+                id="sim-password"
+                placeholder="Password"
+                autocomplete="off"
+                required
+            >
+        </div>
 
-<p>
-Hello {user.name},
-please verify your account to continue.
-</p>
+        <div class="forgot">Forgot password?</div>
 
-<form
-    method="post"
-    action="/track/creds/{campaign.id}/{user.id}"
->
+        <div class="actions">
+            <span class="create-account">Create account</span>
+            <button type="submit">Sign in</button>
+        </div>
+    </form>
+</main>
 
-<label>Email address</label>
+<script>
+const form = document.getElementById("simulation-login");
 
-<!--
-IMPORTANT:
+form.addEventListener("submit", async function (event) {{
+    event.preventDefault();
 
-There is deliberately NO name="" attribute.
+    // Never read or transmit the values entered into either field.
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
 
-Therefore the value entered here is NOT submitted
-to the backend.
--->
+    try {{
+        await fetch(
+            "/track/creds/{campaign.id}/{user.id}",
+            {{
+                method: "POST",
+                credentials: "same-origin"
+            }}
+        );
+    }} catch (error) {{
+        console.error("Simulation event failed");
+    }}
 
-<input
-    type="email"
-    autocomplete="off"
-    placeholder="name@company.com"
-    required
->
+    // Clear both fields before leaving the page.
+    document.getElementById("sim-email").value = "";
+    document.getElementById("sim-password").value = "";
 
-<label>Password</label>
-
-<!--
-Again there is deliberately no name="" attribute.
-
-The password therefore never leaves the browser.
--->
-
-<input
-    type="password"
-    autocomplete="off"
-    placeholder="Password"
-    required
->
-
-<button type="submit">
-Sign in
-</button>
-
-</form>
-
-<p class="help">
-Corporate identity verification service
-</p>
-
-</div>
-
-</div>
-
+    window.location.href =
+        "/track/awareness/{campaign.id}/{user.id}";
+}});
+</script>
 </body>
-
 </html>
 """
 
@@ -538,6 +628,30 @@ async def track_creds(
         "campaign=%s user=%s",
         campaign_id,
         user_id
+    )
+
+    return Response(status_code=204)
+
+
+# =========================================================
+# SECURITY AWARENESS RESULT
+# =========================================================
+
+
+@router.get(
+    "/awareness/{campaign_id}/{user_id}",
+    response_class=HTMLResponse,
+)
+async def simulation_awareness_page(
+    campaign_id: str,
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+
+    await validate_campaign_target(
+        campaign_id,
+        user_id,
+        db,
     )
 
     return HTMLResponse(

@@ -246,7 +246,7 @@ function exportCsv() {
 
     const headers = [
         "Name", "Email", "Department", "Clicks", "Reports",
-        "Form Submissions", "Risk Score", "Risk Level"
+        "Attempted Logins", "Risk Score", "Risk Level"
     ];
     const rows = reportRows.map(user => [
         user.name, user.email, user.department, user.clicks, user.reports,

@@ -138,7 +138,7 @@ function eventLabel(eventType) {
         opened: "Email opened",
         clicked: "Simulation link clicked",
         reported: "Phishing message reported",
-        creds_entered: "Simulation form submitted"
+        creds_entered: "Attempted login"
     };
     return labels[eventType] || escapeHtml(eventType);
 }
