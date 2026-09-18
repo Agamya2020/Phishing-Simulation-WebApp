@@ -47,7 +47,6 @@ def build_email_html(
 
     # Escape any HTML coming from template/user data
     safe_body = html.escape(body_text)
-    safe_campaign_name = html.escape(campaign.name)
     safe_user_name = html.escape(user.name)
 
     click_url = (
@@ -127,28 +126,7 @@ def build_email_html(
     "
 >
 
-    <p
-        style="
-            font-size:11px;
-            color:#999;
-            margin-bottom:24px;
-        "
-    >
-        ⚠️ <strong>PHISHGUARD SIMULATION</strong>
-        — Security awareness training email.
-    </p>
-
     {rendered_body}
-
-    <p
-        style="
-            font-size:12px;
-            color:#aaa;
-            margin-top:32px;
-        "
-    >
-        Campaign: {safe_campaign_name}
-    </p>
 
 </div>
 
