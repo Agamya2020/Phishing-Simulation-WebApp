@@ -134,6 +134,14 @@ function renderDomains() {
                                 : ""
                             }
 
+                            <button
+                                type="button"
+                                class="danger-button delete-domain-button"
+                                data-domain-id="${domain.id}"
+                            >
+                                Remove
+                            </button>
+
                         </div>
 
                     </td>
@@ -376,6 +384,56 @@ async function verifyDomain(domainId) {
 }
 
 
+async function deleteDomain(domainId) {
+
+    const domain =
+        domains.find(
+            item =>
+                String(item.id) ===
+                String(domainId)
+        );
+
+
+    if (!domain) {
+        return;
+    }
+
+
+    const confirmed =
+        window.confirm(
+            `Remove "${domain.domain}" from PhishGuard?\n\n` +
+            "This will NOT delete the domain from Resend."
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            `/api/domains/${encodeURIComponent(domainId)}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+
+        dnsPanel.classList.add("hidden");
+
+        await loadDomains();
+
+    } catch (error) {
+
+        window.alert(
+            error.message
+        );
+    }
+}
+
+
 function showDnsRecords(
     localDomain,
     resendData
@@ -502,6 +560,23 @@ domainTable.addEventListener(
             verifyDomain(
                 verifyButton.dataset.domainId
             );
+
+            return;
+        }
+
+
+        const deleteButton =
+            event.target.closest(
+                ".delete-domain-button"
+            );
+
+        if (deleteButton) {
+
+            deleteDomain(
+                deleteButton.dataset.domainId
+            );
+
+            return;
         }
     }
 );

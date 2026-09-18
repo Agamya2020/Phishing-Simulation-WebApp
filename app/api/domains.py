@@ -201,11 +201,7 @@ async def import_domain(
         .where(SenderDomain.domain == domain_name)
     )
 
-    if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=409,
-            detail="Domain already exists in PhishGuard.",
-        )
+    existing_domain = existing.scalar_one_or_none()
 
     try:
         resend_response = await list_resend_domains()
@@ -260,11 +256,45 @@ async def import_domain(
             detail=resend_error_detail(exc),
         ) from exc
 
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to contact Resend.",
+        ) from exc
+
     status = (
         resend_data.get("status")
         or matched_domain.get("status")
         or "pending"
     )
+
+    if existing_domain:
+        existing_domain.resend_domain_id = resend_id
+        existing_domain.status = status
+        existing_domain.is_active = True
+
+        await db.flush()
+
+        await sync_sender_domain(
+            db,
+            existing_domain,
+        )
+
+        await db.commit()
+        await db.refresh(existing_domain)
+
+        return {
+            "domain": {
+                "id": existing_domain.id,
+                "domain": existing_domain.domain,
+                "resend_domain_id": existing_domain.resend_domain_id,
+                "status": existing_domain.status,
+                "is_active": existing_domain.is_active,
+                "created_at": existing_domain.created_at,
+            },
+            "resend": resend_data,
+            "repaired": True,
+        }
 
     domain = SenderDomain(
         domain=domain_name,
@@ -275,8 +305,7 @@ async def import_domain(
 
     db.add(domain)
 
-    await db.commit()
-    await db.refresh(domain)
+    await db.flush()
 
     await sync_sender_domain(
         db,
@@ -284,6 +313,7 @@ async def import_domain(
     )
 
     await db.commit()
+    await db.refresh(domain)
 
     return {
         "domain": {
@@ -295,6 +325,7 @@ async def import_domain(
             "created_at": domain.created_at,
         },
         "resend": resend_data,
+        "repaired": False,
     }
 
 
@@ -364,6 +395,51 @@ async def get_domain(
             "created_at": domain.created_at,
         },
         "resend": resend_data,
+    }
+
+
+@router.delete("/{domain_id}")
+async def delete_domain(
+    domain_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(SenderDomain).where(
+            SenderDomain.id == domain_id
+        )
+    )
+
+    domain = result.scalar_one_or_none()
+
+    if not domain:
+        raise HTTPException(
+            status_code=404,
+            detail="Domain not found.",
+        )
+
+    sender_result = await db.execute(
+        select(SenderIdentity).where(
+            SenderIdentity.domain_id == domain.id
+        )
+    )
+
+    senders = sender_result.scalars().all()
+
+    for sender in senders:
+        sender.domain_id = None
+        sender.is_verified = False
+        sender.is_active = False
+
+    await db.flush()
+    await db.delete(domain)
+    await db.commit()
+
+    return {
+        "ok": True,
+        "message": (
+            "Domain removed from PhishGuard. "
+            "The domain was not deleted from Resend."
+        ),
     }
 
 
