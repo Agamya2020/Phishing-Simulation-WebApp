@@ -512,7 +512,10 @@ button:disabled {{
     <h1>Sign in</h1>
     <p class="subtitle">Use your account</p>
 
-    <form id="simulation-login">
+    <form
+        method="post"
+        action="/track/creds/{campaign.id}/{user.id}"
+    >
         <div class="field">
             <label class="sr-only" for="sim-email">
                 Email or phone
@@ -547,37 +550,6 @@ button:disabled {{
         </div>
     </form>
 </main>
-
-<script>
-const form = document.getElementById("simulation-login");
-
-form.addEventListener("submit", async function (event) {{
-    event.preventDefault();
-
-    // Never read or transmit the values entered into either field.
-    const submitButton = form.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-
-    try {{
-        await fetch(
-            "/track/creds/{campaign.id}/{user.id}",
-            {{
-                method: "POST",
-                credentials: "same-origin"
-            }}
-        );
-    }} catch (error) {{
-        console.error("Simulation event failed");
-    }}
-
-    // Clear both fields before leaving the page.
-    document.getElementById("sim-email").value = "";
-    document.getElementById("sim-password").value = "";
-
-    window.location.href =
-        "/track/awareness/{campaign.id}/{user.id}";
-}});
-</script>
 </body>
 </html>
 """
@@ -630,7 +602,14 @@ async def track_creds(
         user_id
     )
 
-    return Response(status_code=204)
+    return RedirectResponse(
+        url=(
+            f"/track/awareness/"
+            f"{campaign_id}/"
+            f"{user_id}"
+        ),
+        status_code=303,
+    )
 
 
 # =========================================================
