@@ -16,7 +16,11 @@ async function apiRequest(url, options = {}) {
     const method = (options.method || "GET").toUpperCase();
     const headers = {...options.headers};
 
-    if (options.body && !headers["Content-Type"]) {
+    const isFormData =
+        typeof FormData !== "undefined" &&
+        options.body instanceof FormData;
+
+    if (options.body && !headers["Content-Type"] && !isFormData) {
         headers["Content-Type"] = "application/json";
     }
 

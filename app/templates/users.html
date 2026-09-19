@@ -32,7 +32,20 @@
             <h1>Users</h1>
             <p>Manage employees used in phishing simulations.</p>
         </div>
-        <button id="newUserButton" class="primary-action-button" type="button">+ New User</button>
+        <div class="action-buttons">
+            <input
+                id="userImportFile"
+                type="file"
+                accept=".csv,.xlsx,.txt"
+                hidden
+            >
+            <button id="importUsersButton" class="secondary-button" type="button">
+                Import Users
+            </button>
+            <button id="newUserButton" class="primary-action-button" type="button">
+                + New User
+            </button>
+        </div>
     </header>
 
     <section class="dashboard-panel campaigns-panel">

@@ -199,10 +199,32 @@ async def update_campaign(campaign_id: str, payload: CampaignUpdate, db: AsyncSe
 
 
 @router.delete("/{campaign_id}")
-async def delete_campaign(campaign_id: str, db: AsyncSession = Depends(get_db)):
-    await db.execute(delete(Campaign).where(Campaign.id == campaign_id))
+async def delete_campaign(
+    campaign_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Campaign).where(Campaign.id == campaign_id)
+    )
+    campaign = result.scalar_one_or_none()
+
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    if campaign.status in {"active", "processing"}:
+        raise HTTPException(
+            status_code=409,
+            detail="An active campaign cannot be deleted.",
+        )
+
+    await db.execute(
+        delete(CampaignEvent).where(
+            CampaignEvent.campaign_id == campaign_id
+        )
+    )
+    await db.delete(campaign)
     await db.commit()
-    return {"ok": True}
+    return {"ok": True, "message": "Campaign deleted."}
 
 
 @router.post("/{campaign_id}/send", response_model=CampaignOut)

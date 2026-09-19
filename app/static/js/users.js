@@ -3,6 +3,8 @@ const userModal = document.getElementById("userModal");
 const userForm = document.getElementById("userForm");
 const userError = document.getElementById("userError");
 const saveUserButton = document.getElementById("saveUserButton");
+const importUsersButton = document.getElementById("importUsersButton");
+const userImportFile = document.getElementById("userImportFile");
 let loadedUsers = [];
 let loadedDepartments = [];
 
@@ -172,6 +174,48 @@ userTable.addEventListener("click", event => {
     const deleteButton = event.target.closest(".delete-user-button");
     if (deleteButton) {
         deleteUser(deleteButton.dataset.userId);
+    }
+});
+
+importUsersButton.addEventListener("click", () => {
+    userImportFile.click();
+});
+
+userImportFile.addEventListener("change", async () => {
+    const file = userImportFile.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    importUsersButton.disabled = true;
+    importUsersButton.textContent = "Importing...";
+
+    try {
+        const result = await apiRequest("/api/users/import", {
+            method: "POST",
+            body: formData
+        });
+        let message =
+            `Imported: ${result.imported}\n` +
+            `Skipped: ${result.skipped}`;
+
+        if (result.errors && result.errors.length) {
+            message +=
+                "\n\nWarnings:\n" +
+                result.errors.slice(0, 10).join("\n");
+        }
+
+        window.alert(message);
+        await loadUsers();
+    } catch (error) {
+        window.alert(error.message);
+    } finally {
+        userImportFile.value = "";
+        importUsersButton.disabled = false;
+        importUsersButton.textContent = "Import Users";
     }
 });
 

@@ -38,7 +38,10 @@ async function loadDepartments() {
                 <td><strong>${escapeHtml(department.name)}</strong></td>
                 <td>${escapeHtml(department.code)}</td>
                 <td>${escapeHtml(department.head || "-")}</td>
-                <td><span class="muted-text">Available</span></td>
+                <td>
+                    <button class="danger-button delete-department-button" type="button"
+                            data-department-id="${escapeHtml(department.id)}">Delete</button>
+                </td>
             </tr>
         `).join("");
     } catch (error) {
@@ -83,6 +86,28 @@ departmentForm.addEventListener("submit", async event => {
     } finally {
         saveDepartmentButton.disabled = false;
         saveDepartmentButton.textContent = "Create Department";
+    }
+});
+
+async function deleteDepartment(departmentId) {
+    if (!window.confirm("Delete this department? Users will remain but will have no department.")) {
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/departments/${encodeURIComponent(departmentId)}`, {
+            method: "DELETE"
+        });
+        await loadDepartments();
+    } catch (error) {
+        window.alert(error.message);
+    }
+}
+
+departmentTable.addEventListener("click", event => {
+    const button = event.target.closest(".delete-department-button");
+    if (button) {
+        deleteDepartment(button.dataset.departmentId);
     }
 });
 

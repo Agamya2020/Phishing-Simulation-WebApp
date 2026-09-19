@@ -72,6 +72,8 @@ function renderCampaigns(campaigns) {
                     <div class="action-buttons">
                         <a href="${detailHref}" class="table-action-link">Details</a>
                         ${sendAction}
+                        <button class="danger-button delete-campaign-button" type="button"
+                                data-campaign-id="${escapeHtml(campaign.id)}">Delete</button>
                     </div>
                 </td>
             </tr>
@@ -419,10 +421,31 @@ async function sendCampaign(campaignId) {
     }
 }
 
+async function deleteCampaign(campaignId) {
+    if (!window.confirm("Delete this campaign and all of its tracking data?")) {
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/campaigns/${encodeURIComponent(campaignId)}`, {
+            method: "DELETE"
+        });
+        await loadCampaigns();
+    } catch (error) {
+        window.alert(error.message);
+    }
+}
+
 campaignTable.addEventListener("click", event => {
-    const button = event.target.closest(".send-campaign-button");
-    if (button) {
-        sendCampaign(button.dataset.campaignId);
+    const sendButton = event.target.closest(".send-campaign-button");
+    if (sendButton) {
+        sendCampaign(sendButton.dataset.campaignId);
+        return;
+    }
+
+    const deleteButton = event.target.closest(".delete-campaign-button");
+    if (deleteButton) {
+        deleteCampaign(deleteButton.dataset.campaignId);
     }
 });
 
