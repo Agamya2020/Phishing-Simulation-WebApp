@@ -20,7 +20,11 @@ async function apiRequest(url, options = {}) {
         typeof FormData !== "undefined" &&
         options.body instanceof FormData;
 
-    if (options.body && !headers["Content-Type"] && !isFormData) {
+    if (
+        options.body &&
+        !headers["Content-Type"] &&
+        !isFormData
+    ) {
         headers["Content-Type"] = "application/json";
     }
 
@@ -56,12 +60,29 @@ async function apiRequest(url, options = {}) {
 
     if (!response.ok) {
         let message = "Request failed";
+
         try {
             const data = await response.json();
-            message = data.detail || message;
+
+            if (typeof data.detail === "string") {
+                message = data.detail;
+            } else if (Array.isArray(data.detail)) {
+                message = data.detail
+                    .map(item => {
+                        if (item && item.msg) {
+                            return item.msg;
+                        }
+
+                        return JSON.stringify(item);
+                    })
+                    .join("\n");
+            } else if (data.detail) {
+                message = JSON.stringify(data.detail);
+            }
         } catch {
-            // The server did not return a JSON error response.
+            // Server did not return JSON.
         }
+
         throw new Error(message);
     }
 

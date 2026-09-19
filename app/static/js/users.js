@@ -189,15 +189,21 @@ userImportFile.addEventListener("change", async () => {
     }
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append(
+        "file",
+        file
+    );
     importUsersButton.disabled = true;
     importUsersButton.textContent = "Importing...";
 
     try {
-        const result = await apiRequest("/api/users/import", {
-            method: "POST",
-            body: formData
-        });
+        const result = await apiRequest(
+            "/api/users/import",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
         let message =
             `Imported: ${result.imported}\n` +
             `Skipped: ${result.skipped}`;
