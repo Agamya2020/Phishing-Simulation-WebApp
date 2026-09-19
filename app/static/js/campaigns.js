@@ -5,6 +5,7 @@ const campaignError = document.getElementById("campaignError");
 const createCampaignButton = document.getElementById("createCampaignButton");
 const scheduleContainer = document.getElementById("scheduleContainer");
 const scheduledAtInput = document.getElementById("scheduledAt");
+let availableUsers = [];
 
 function normalizeList(data) {
     if (Array.isArray(data)) {
@@ -94,19 +95,26 @@ async function loadFormData() {
         templatesData,
         usersData,
         groupsData,
+        departmentsData,
         resendSendersData,
         gmailSendersData
     ] = await Promise.all([
         apiRequest("/api/templates"),
         apiRequest("/api/users"),
         apiRequest("/api/groups"),
+        apiRequest("/api/departments"),
         apiRequest("/api/senders"),
         apiRequest("/api/google/senders")
     ]);
 
+    availableUsers = normalizeList(usersData);
+
     renderTemplates(normalizeList(templatesData));
-    renderUsers(normalizeList(usersData));
-    renderGroups(normalizeList(groupsData));
+    renderUsers(availableUsers);
+    renderTargetGroups(
+        normalizeList(groupsData),
+        normalizeList(departmentsData)
+    );
 
     renderSenders(
         normalizeList(resendSendersData),
@@ -242,20 +250,58 @@ function renderUsers(users) {
     `).join("");
 }
 
-function renderGroups(groups) {
+function renderTargetGroups(groups, departments) {
     const container = document.getElementById("groupList");
 
-    if (!groups.length) {
-        container.textContent = "No groups available.";
+    if (!groups.length && !departments.length) {
+        container.textContent = "No departments or groups available.";
         return;
     }
 
-    container.innerHTML = groups.map(group => `
-        <label class="checkbox-item">
-            <input type="checkbox" class="group-checkbox" value="${escapeHtml(group.id)}">
-            <span><strong>${escapeHtml(group.name)}</strong></span>
-        </label>
-    `).join("");
+    let html = "";
+
+    if (departments.length) {
+        html += `
+            <div class="selection-section">
+                <strong>Departments</strong>
+            </div>
+        `;
+
+        html += departments.map(department => `
+            <label class="checkbox-item">
+                <input
+                    type="checkbox"
+                    class="department-checkbox"
+                    value="${escapeHtml(department.id)}"
+                >
+                <span>
+                    <strong>${escapeHtml(department.name)}</strong>
+                    <small>${escapeHtml(department.code || "")}</small>
+                </span>
+            </label>
+        `).join("");
+    }
+
+    if (groups.length) {
+        html += `
+            <div class="selection-section" style="margin-top:16px;">
+                <strong>Groups</strong>
+            </div>
+        `;
+
+        html += groups.map(group => `
+            <label class="checkbox-item">
+                <input
+                    type="checkbox"
+                    class="group-checkbox"
+                    value="${escapeHtml(group.id)}"
+                >
+                <span><strong>${escapeHtml(group.name)}</strong></span>
+            </label>
+        `).join("");
+    }
+
+    container.innerHTML = html;
 }
 
 document.getElementById("openCreateCampaign").addEventListener("click", async () => {
@@ -319,10 +365,31 @@ campaignForm.addEventListener("submit", async event => {
 
     const senderSelection =
         document.getElementById("senderSelect").value;
-    const userIds = Array.from(document.querySelectorAll(".user-checkbox:checked"))
+
+    const directlySelectedUserIds = Array.from(
+        document.querySelectorAll(".user-checkbox:checked")
+    )
         .map(checkbox => checkbox.value);
-    const groupIds = Array.from(document.querySelectorAll(".group-checkbox:checked"))
+
+    const departmentIds = Array.from(
+        document.querySelectorAll(".department-checkbox:checked")
+    )
         .map(checkbox => checkbox.value);
+
+    const groupIds = Array.from(
+        document.querySelectorAll(".group-checkbox:checked")
+    )
+        .map(checkbox => checkbox.value);
+
+    const departmentUserIds = availableUsers
+        .filter(user => departmentIds.includes(user.department_id))
+        .map(user => user.id);
+
+    const userIds = Array.from(new Set([
+        ...directlySelectedUserIds,
+        ...departmentUserIds
+    ]));
+
     const deliveryMode = document.querySelector('input[name="deliveryMode"]:checked').value;
 
     if (!senderSelection) {
@@ -348,8 +415,12 @@ campaignForm.addEventListener("submit", async event => {
         return;
     }
 
-    if (!userIds.length && !groupIds.length) {
-        campaignError.textContent = "Select at least one user or group.";
+    if (
+        !userIds.length &&
+        !groupIds.length
+    ) {
+        campaignError.textContent =
+            "Select at least one department, group, or user.";
         return;
     }
 
